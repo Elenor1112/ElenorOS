@@ -91,7 +91,13 @@ const createSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
-  status: z.enum(["TODO", "IN_PROGRESS", "HOLD", "WAITING_APPROVAL", "EDITING", "DONE", "CANCELLED"]).default("TODO"),
+  /**
+   * DONE and WAITING_APPROVAL are deliberately absent: a task cannot be born
+   * complete or under review, because either would mean skipping the approval
+   * flow that DONE is supposed to represent. New work starts open and earns its
+   * way to DONE through submit → approve.
+   */
+  status: z.enum(["TODO", "IN_PROGRESS", "HOLD", "EDITING", "CANCELLED"]).default("TODO"),
   projectId: z.string().optional().nullable(),
   /**
    * Only honoured for tasks with NO project — a project's client always wins.

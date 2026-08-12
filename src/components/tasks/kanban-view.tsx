@@ -9,6 +9,7 @@ import { TASK_STATUS_META, TASK_STATUS_ORDER } from "@/lib/constants";
 import { TaskCard, type TaskListItem } from "./task-bits";
 import { useSession } from "@/components/session-context";
 import { canChangeTaskStatus } from "@/lib/rbac";
+import { DIRECTLY_SETTABLE_STATUSES } from "@/lib/task-status";
 import type { TaskStatus } from "@prisma/client";
 
 export function KanbanView({
@@ -88,7 +89,27 @@ export function KanbanView({
     if (dragId) {
       const task = tasks.find((t) => t.id === dragId);
       if (task && task.status !== status && canMove(task)) {
-        move.mutate({ id: dragId, status });
+        // The approval columns are not drop targets: reaching Done requires an
+        // approver's decision and entering Waiting Approval requires evidence,
+        // neither of which a drag can supply. Explaining that beats an optimistic
+        // move that snaps back when the API refuses it.
+        if (!DIRECTLY_SETTABLE_STATUSES.includes(status)) {
+          toast.info(
+            status === "DONE"
+              ? "Open the task and submit it for approval — Done is set by the approver."
+              : "Open the task to submit it for approval with proof of completion."
+          );
+        } else if (!DIRECTLY_SETTABLE_STATUSES.includes(task.status)) {
+          // Equally, a task already under review (or approved) cannot be dragged
+          // out of it by hand.
+          toast.info(
+            task.status === "DONE"
+              ? "This task is approved and closed."
+              : "This task is waiting for approval — an approver has to decide on it."
+          );
+        } else {
+          move.mutate({ id: dragId, status });
+        }
       }
     }
     setDragId(null);

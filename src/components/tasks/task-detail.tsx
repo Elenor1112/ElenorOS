@@ -18,11 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge, TimestampValue, taskRef, isCodeRef } from "./task-bits";
+import { TaskApproval } from "./task-approval";
 import { TASK_STATUS_META, TASK_STATUS_ORDER, PRIORITY_META } from "@/lib/constants";
 import { formatExactDateTime, fullName } from "@/lib/utils";
 import { DeadlinePicker, toDeadlineInput } from "@/components/ui/deadline-picker";
 import { useSession, useCan } from "@/components/session-context";
 import { canChangeTaskStatus } from "@/lib/rbac";
+import { DIRECTLY_SETTABLE_STATUSES } from "@/lib/task-status";
 import type { TaskStatus } from "@prisma/client";
 
 export function TaskDetail({ taskId, onClose }: { taskId: string | null; onClose: () => void }) {
@@ -81,6 +83,11 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const canSetWorker =
     can(task?.workerId ? "Task.ChangeWorker" : "Task.AssignWorker") ||
     (can("Task.DelegateOwnTasks") && isAssignee);
+
+  // While a review is open (or the task is approved and closed) the status is not
+  // hand-editable by anyone — it moves only through an approval decision. Mirrors
+  // assertDirectStatusChange in lib/task-lifecycle.ts.
+  const approvalLocked = task?.status === "WAITING_APPROVAL" || task?.status === "DONE";
 
   // Who is accountable can be changed after creation by the CEO, Operations
   // Manager, PR & Sales Manager and Account Management. Separate from
@@ -210,16 +217,32 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
                 {/* Only the assigned employee reports status. Everyone else,
                     managers included, sees it as a read-only badge. */}
                 <MetaRow label="Status">
-                  {canSetStatus ? (
+                  {/* Done and Waiting Approval are absent from the options: they
+                      belong to the approval flow (the panel below), and the API
+                      refuses them here. The current status is always listed even
+                      when it is one of those, so a task under review still shows
+                      what it is rather than snapping to another value. */}
+                  {canSetStatus && !approvalLocked ? (
                     <Select
                       value={task.status}
                       onChange={(e) => changeStatus(e.target.value as TaskStatus)}
                       className="h-8"
                     >
-                      {TASK_STATUS_ORDER.map((s) => (
+                      {TASK_STATUS_ORDER.filter(
+                        (s) => DIRECTLY_SETTABLE_STATUSES.includes(s) || s === task.status
+                      ).map((s) => (
                         <option key={s} value={s}>{TASK_STATUS_META[s].label}</option>
                       ))}
                     </Select>
+                  ) : approvalLocked ? (
+                    <div>
+                      <StatusBadge status={task.status} />
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {task.status === "DONE"
+                          ? "Approved and closed."
+                          : "Under review — an approver decides from here."}
+                      </p>
+                    </div>
                   ) : (
                     <div>
                       <StatusBadge status={task.status} />
@@ -368,6 +391,11 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
                   className="w-full accent-primary"
                 />
               </div>
+
+              {/* Approval — submit evidence, and the approver's decision.
+                  High in the panel because when a task is under review this is
+                  the only thing anyone opening it wants to act on. */}
+              <TaskApproval task={task} taskId={taskId} />
 
               {/* description */}
               <div className="mt-4">

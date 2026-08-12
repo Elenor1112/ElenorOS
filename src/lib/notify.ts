@@ -12,6 +12,10 @@ const PUSH_WORTHY = new Set<NotificationType>([
   "TASK_ASSIGNED",
   "MENTIONED",
   "APPROVAL_REQUIRED",
+  // An approval outcome either unblocks the worker or sends them back to the
+  // drawing board — both are worth interrupting for.
+  "TASK_APPROVED",
+  "TASK_REJECTED",
   "DEADLINE_REMINDER",
   "LEAVE_APPROVED",
   "LEAVE_REJECTED",

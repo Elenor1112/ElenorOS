@@ -8,6 +8,7 @@ import {
   workerAuthorization, isAssignableBy, recordWorkerChange, resolveTaskClientId,
 } from "@/lib/tasks";
 import { can, canChangeTaskStatus } from "@/lib/rbac";
+import { assertDirectStatusChange, submissionInclude } from "@/lib/task-lifecycle";
 import { notifyMany } from "@/lib/notify";
 import type { TaskStatus } from "@prisma/client";
 
@@ -45,6 +46,11 @@ const taskInclude = {
   },
   attachments: true,
   dependsOn: { include: { prerequisite: { select: { id: true, code: true, title: true, status: true } } } },
+  // The approval evidence trail, newest first. Every attempt is returned, not
+  // just the open one, so the approver can compare a resubmission against what
+  // was rejected last time.
+  submissions: submissionInclude,
+  approvedBy: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
 } as const;
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -76,6 +82,8 @@ const updateSchema = z.object({
   // null clears the worker; undefined leaves it untouched.
   workerId: z.string().optional().nullable(),
   labelIds: z.array(z.string()).optional(),
+  // Still accepted so an older client sending it gets the explanatory 403 below
+  // rather than a silent no-op; the approval flow owns this field.
   approvalStatus: z.enum(["NOT_REQUIRED", "PENDING", "APPROVED", "REJECTED"]).optional(),
 });
 
@@ -131,6 +139,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       throw new ApiError(
         403,
         "Only the employee assigned to this task can change its status."
+      );
+    }
+
+    // The approval lifecycle is not reachable through a plain status edit. DONE
+    // is only ever written by the approve endpoint, and entering WAITING_APPROVAL
+    // requires evidence this payload cannot carry — so both are refused here with
+    // a message naming the action to use instead. Checked after the permission
+    // gate above so an outsider gets "not yours" rather than a workflow lecture.
+    if (changingStatus) {
+      assertDirectStatusChange(before.status, data.status!);
+    }
+
+    // approvalStatus mirrors the approval flow's own decisions; letting a client
+    // set it directly would let a task read APPROVED without ever being reviewed.
+    if (data.approvalStatus !== undefined && data.approvalStatus !== before.approvalStatus) {
+      throw new ApiError(
+        403,
+        "Approval status is set by approving or rejecting the task, not edited directly."
       );
     }
 
@@ -232,7 +258,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         projectId: data.projectId === undefined ? undefined : data.projectId || null,
         departmentId: data.departmentId === undefined ? undefined : data.departmentId || null,
         workerId: data.workerId === undefined ? undefined : data.workerId || null,
-        approvalStatus: data.approvalStatus,
       },
     });
 
@@ -344,16 +369,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           meta: { startedAt: stamps.startedAt },
         });
       }
-      // notify followers/creator when a task enters approval or is done
-      if (data.status === "WAITING_APPROVAL") {
-        await notifyMany([before.createdById], {
-          type: "APPROVAL_REQUIRED",
-          title: "Approval needed",
-          body: `"${before.title}" (${before.code}) is waiting for your review.`,
-          link: `/tasks?task=${id}`,
-          meta: { taskId: id, assignedBy: `${user.firstName} ${user.lastName}` },
-        });
-      }
+      // Entering approval and reaching DONE are unreachable here (see
+      // assertDirectStatusChange), so their notifications live with the actions
+      // that perform them in lib/task-lifecycle.ts.
       await rollupSubtaskProgress(id);
     }
     if (progress !== undefined && progress !== before.progress) {

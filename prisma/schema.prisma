@@ -137,6 +137,10 @@ model User {
   workedTasks       Task[]              @relation("TaskWorker")
   workerAssignments WorkerAssignment[]  @relation("WorkerAssignmentWorker")
   workerDelegations WorkerAssignment[]  @relation("WorkerAssignmentAssignedBy")
+  approvedTasks     Task[]              @relation("TaskApprovedBy")
+  taskSubmissions   TaskSubmission[]     @relation("TaskSubmissionAuthor")
+  taskDecisions     TaskSubmission[]     @relation("TaskSubmissionDecider")
+  taskEvidenceFiles TaskSubmissionFile[] @relation("TaskSubmissionFileUploader")
   taskFollows       TaskFollower[]
   comments          Comment[]
   activities        Activity[]
@@ -420,6 +424,33 @@ model Task {
 
   approvalStatus ApprovalStatus @default(NOT_REQUIRED)
 
+  /// ── Approval lifecycle (EDITING → WAITING_APPROVAL → DONE) ──
+  ///
+  /// `submissions` is the evidence trail: one row per attempt at handing the work
+  /// in, never overwritten, so a reject → fix → resubmit cycle stays legible to
+  /// the approver ("what did they send me last time, and what changed?").
+  submissions     TaskSubmission[]
+  submissionFiles TaskSubmissionFile[]
+
+  /// Denormalized pointer to the submission currently under review, so the task
+  /// list and Kanban can show "has evidence" without joining the whole trail.
+  /// Null once a decision is made — see TaskSubmission.decision for history.
+  activeSubmissionId String?         @unique
+  activeSubmission   TaskSubmission? @relation("ActiveSubmission", fields: [activeSubmissionId], references: [id], onDelete: SetNull)
+
+  /// When the CURRENT review started, i.e. the last entry into WAITING_APPROVAL.
+  /// Unlike the write-once lifecycle stamps above this is re-stamped on every
+  /// resubmission, because "how long has this been sitting with the approver"
+  /// is a question about the open review, not the task's whole history.
+  submittedAt DateTime? @db.Timestamptz
+
+  /// Who signed the task off, and when. Kept on the task (not only on the
+  /// submission) so "who approved this?" is answerable without a join, and
+  /// cleared on rejection so a bounced task never reads as approved.
+  approvedById String?
+  approvedBy   User?     @relation("TaskApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt   DateTime? @db.Timestamptz
+
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz
 
@@ -434,6 +465,100 @@ model Task {
   @@index([startedAt])
   // "What is this designer currently executing?" — the workload query.
   @@index([workerId])
+  // "What is waiting on me to approve?" — the approver's queue.
+  @@index([status, submittedAt])
+  @@index([approvedById])
+}
+
+enum SubmissionDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Proof of completion handed in when a task moves to WAITING_APPROVAL.
+///
+/// A task cannot enter approval without one of these carrying at least one piece
+/// of evidence (notes, a link, or a file) — the rule lives in
+/// lib/task-lifecycle.ts and is enforced by the API, not the UI.
+///
+/// Append-only: rejecting does not delete the row, it stamps a decision and the
+/// next attempt creates a new one. That is what makes the audit trail useful —
+/// the approver can see the rejected attempt and its reason alongside the new
+/// evidence, and nobody can quietly revise what they submitted after a rejection.
+model TaskSubmission {
+  id     String @id @default(cuid())
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+
+  /// Back-reference for Task.activeSubmission. Unused in queries; Prisma
+  /// requires the opposite side of the relation to be declared.
+  activeFor Task? @relation("ActiveSubmission")
+
+  /// The worker or assignee who handed the work in.
+  submittedById String
+  submittedBy   User   @relation("TaskSubmissionAuthor", fields: [submittedById], references: [id])
+
+  /// The evidence. Every field is optional individually, but the service layer
+  /// requires at least one of notes / url / files to be present, so an empty
+  /// submission can never exist.
+  notes String?
+  url   String?
+  files TaskSubmissionFile[]
+
+  decision   SubmissionDecision @default(PENDING)
+  /// Who approved or rejected, and why. `comment` carries the rejection reason
+  /// back to the worker — the whole point of bouncing a task rather than fixing
+  /// it silently.
+  decidedById String?
+  decidedBy   User?     @relation("TaskSubmissionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt   DateTime? @db.Timestamptz
+  comment     String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([taskId, createdAt])
+  @@index([submittedById])
+}
+
+/// Bytes for an uploaded piece of evidence.
+///
+/// Stored in the database, mirroring SalesAttachmentFile and JobDescriptionFile:
+/// the platform deliberately has no external object store, so this keeps image
+/// and document evidence working with nothing else to configure. Split from the
+/// metadata row so listing a task's submissions never loads the payloads.
+model TaskSubmissionFile {
+  id String @id @default(cuid())
+
+  /// Null between upload and submit: the user picks files in the form before the
+  /// submission row exists, so an upload is parented to the TASK first and
+  /// claimed by the submission when they hand it in. An unclaimed row is a draft
+  /// — see `taskId` — and is replaced rather than orphaned if they start over.
+  submission   TaskSubmission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String?
+
+  /// Always set, even once claimed. This is what scopes an upload to one task so
+  /// evidence cannot be attached across tasks by guessing ids, and what lets the
+  /// draft be found before a submission exists.
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+
+  /// Who uploaded it — needed to scope a user's own drafts.
+  uploadedById String
+  uploadedBy   User   @relation("TaskSubmissionFileUploader", fields: [uploadedById], references: [id])
+
+  name     String
+  mimeType String
+  size     Int
+  /// sha256 — served as the ETag, and detects a re-upload of identical bytes.
+  checksum String
+  data     Bytes
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([submissionId])
+  // Finding a user's unclaimed drafts for a task, the pre-submit lookup.
+  @@index([taskId, uploadedById, submissionId])
 }
 
 /// Append-only record of who was executing a task and when.
@@ -830,6 +955,11 @@ enum NotificationType {
   TASK_ASSIGNED
   DEADLINE_REMINDER
   APPROVAL_REQUIRED
+  /// Outcomes of the task approval flow. Separate from the LEAVE_* pair so a
+  /// worker's "your work was signed off" and an approver's "this needs review"
+  /// can be filtered and styled apart.
+  TASK_APPROVED
+  TASK_REJECTED
   LEAVE_APPROVED
   LEAVE_REJECTED
   PERMISSION_APPROVED

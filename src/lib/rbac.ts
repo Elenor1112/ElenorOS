@@ -1,4 +1,4 @@
-import type { RoleKey } from "@prisma/client";
+import type { RoleKey, TaskStatus } from "@prisma/client";
 
 /**
  * Enterprise RBAC for Elenor OS.
@@ -460,6 +460,101 @@ export function canChangeTaskStatus(
   const hasOwner = task.assignees.length > 0 || task.workerId !== null;
   if (!hasOwner) return can(user, "Task.ChangeStatus") || can(user, "Task.EditDetails");
   return task.assignees.some((a) => a.userId === user.id) || task.workerId === user.id;
+}
+
+// ─── Task approval lifecycle ─────────────────────────────────
+
+/**
+ * The parties to a task's approval, as the lifecycle rules see it.
+ *
+ * Deliberately the minimum shape the rules need, so both the API (which has the
+ * full Prisma row) and the task drawer (which has the JSON response) can ask the
+ * same questions of the same function.
+ */
+export type ApprovableTask = {
+  status: TaskStatus;
+  createdById: string;
+  assignees: { userId: string }[];
+  workerId: string | null;
+};
+
+/**
+ * Who may hand a task in for review.
+ *
+ * The people doing the work: the worker execution was delegated to, and the
+ * assignees who stay accountable for it. Mirrors canChangeTaskStatus — if you
+ * are entitled to report on the work, you are entitled to submit it — with the
+ * same deliberate absence of a super-admin bypass on an owned task.
+ */
+export function canSubmitForApproval(
+  user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
+  task: ApprovableTask
+): boolean {
+  return canChangeTaskStatus(user, task);
+}
+
+/**
+ * Who may approve or reject a task sitting in WAITING_APPROVAL.
+ *
+ * Three ways to qualify:
+ *  - the CREATOR, who briefed the work and is the default reviewer;
+ *  - an ASSIGNEE, who is accountable for the outcome (this is the Art Director
+ *    who delegated execution to a designer and now signs the result off);
+ *  - a holder of `Task.Approve` — Operations Manager and CEO via super-admin,
+ *    plus Account Manager and Art Director, who review as a matter of role.
+ *
+ * Unlike status reporting this DOES admit super admins: the requirement puts the
+ * Operations Manager and CEO on the approval path explicitly, and an approval
+ * that nobody senior can unblock is how tasks get stuck when someone is on leave.
+ *
+ * The one hard exclusion is self-approval — see canApproveTask's caller and
+ * `wouldSelfApprove` below. A worker cannot sign off their own submission, which
+ * is the entire point of having an approval step.
+ */
+export function isApproverFor(
+  user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
+  task: ApprovableTask
+): boolean {
+  if (task.createdById === user.id) return true;
+  if (task.assignees.some((a) => a.userId === user.id)) return true;
+  return can(user, "Task.Approve");
+}
+
+/**
+ * Whether this user deciding this submission would be signing off their own
+ * work.
+ *
+ * Kept separate from `isApproverFor` because the two answer different questions
+ * and the UI needs both: "are you a reviewer here?" decides whether to render
+ * the approve/reject controls at all, while this decides whether to disable them
+ * with an explanation.
+ *
+ * A submission's AUTHOR may never decide it, even when they would otherwise
+ * qualify as an approver (a creator who also did the work, a super admin who
+ * submitted). Somebody else has to look at it.
+ */
+export function wouldSelfApprove(
+  user: Pick<SessionUser, "id">,
+  submission: { submittedById: string } | null | undefined
+): boolean {
+  return Boolean(submission && submission.submittedById === user.id);
+}
+
+/**
+ * Whether this user can act on the approval right now — i.e. render the
+ * Approve / Request changes buttons.
+ *
+ * Combines every gate: the task must be under review, the user must be a
+ * reviewer, and it must not be their own submission.
+ */
+export function canDecideApproval(
+  user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
+  task: ApprovableTask,
+  activeSubmission: { submittedById: string } | null | undefined
+): boolean {
+  if (task.status !== "WAITING_APPROVAL") return false;
+  if (!isApproverFor(user, task)) return false;
+  return !wouldSelfApprove(user, activeSubmission);
 }
 
 /**

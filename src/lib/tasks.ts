@@ -143,10 +143,15 @@ export async function rollupSubtaskProgress(taskId: string) {
   });
   if (!subs.length) return;
   const avg = Math.round(subs.reduce((s, t) => s + t.progress, 0) / subs.length);
-  const allDone = subs.every((t) => t.status === "DONE");
+
+  // Progress rolls up, STATUS DOES NOT. A parent whose subtasks are all finished
+  // is ready to be handed in, not approved: closing it here would mint a DONE
+  // task that no approver ever signed off, which is exactly what the approval
+  // flow exists to prevent. The assignee submits the parent themselves once the
+  // children are in — see lib/task-lifecycle.ts.
   await db.task.update({
     where: { id: task.parentId },
-    data: { progress: avg, ...(allDone ? { status: "DONE" } : {}) },
+    data: { progress: avg },
   });
 }
 
