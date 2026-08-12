@@ -31,7 +31,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const task = await db.task.findUnique({
       where: { id },
       select: {
-        id: true, status: true, createdById: true, workerId: true,
+        id: true, status: true, createdById: true,
+        workers: { select: { userId: true } },
         assignees: { select: { userId: true } },
       },
     });

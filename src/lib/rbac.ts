@@ -427,6 +427,32 @@ export function canAny(user: Pick<SessionUser, "isSuperAdmin" | "permissions">, 
 }
 
 /**
+ * A task as the ownership rules need to see it: who is accountable, and who is
+ * executing.
+ *
+ * `workers` is the real set. `workerId` is the pre-multi-worker single pointer,
+ * still accepted so a caller holding an old row or an old API response gets the
+ * right answer instead of silently reading as unassigned.
+ */
+export type TaskOwnership = {
+  assignees: { userId: string }[];
+  workers?: { userId: string }[];
+  /** @deprecated superseded by `workers`; read only as a fallback. */
+  workerId?: string | null;
+};
+
+/**
+ * The ids of everyone executing a task, from whichever shape the caller has.
+ *
+ * Single place where the legacy pointer is folded in, so no rule has to
+ * remember the fallback and none of them can disagree about it.
+ */
+export function taskWorkerIds(task: TaskOwnership): string[] {
+  if (task.workers) return task.workers.map((w) => w.userId);
+  return task.workerId ? [task.workerId] : [];
+}
+
+/**
  * Whether this user may change a task's STATUS.
  *
  * Status reports how the work itself is going, so it belongs to the person
@@ -439,12 +465,16 @@ export function canAny(user: Pick<SessionUser, "isSuperAdmin" | "permissions">, 
  *
  * "The assigned employee" means either:
  *  - an ASSIGNEE, who is accountable for the outcome, or
- *  - the WORKER, the person execution was delegated to.
+ *  - a WORKER, one of the people execution was delegated to.
  *
- * The worker is included because delegation moves the doing without moving the
+ * Workers are included because delegation moves the doing without moving the
  * accountability: once an Art Director hands execution to a designer, the
  * designer is the only one who knows when the work actually started. Excluding
  * them would leave a delegated task with nobody able to report on it.
+ *
+ * A task may have several workers, and they are equal — ANY of them may report
+ * status. Two designers sharing a task both know how it is going, and making one
+ * of them ask the other to move it would put a person in the way of the work.
  *
  * An UNASSIGNED task has no such owner, so it falls back to the ordinary
  * permission — otherwise a task nobody is on could never be moved or cancelled.
@@ -455,11 +485,12 @@ export function canAny(user: Pick<SessionUser, "isSuperAdmin" | "permissions">, 
  */
 export function canChangeTaskStatus(
   user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
-  task: { assignees: { userId: string }[]; workerId: string | null }
+  task: TaskOwnership
 ): boolean {
-  const hasOwner = task.assignees.length > 0 || task.workerId !== null;
+  const workerIds = taskWorkerIds(task);
+  const hasOwner = task.assignees.length > 0 || workerIds.length > 0;
   if (!hasOwner) return can(user, "Task.ChangeStatus") || can(user, "Task.EditDetails");
-  return task.assignees.some((a) => a.userId === user.id) || task.workerId === user.id;
+  return task.assignees.some((a) => a.userId === user.id) || workerIds.includes(user.id);
 }
 
 // ─── Task approval lifecycle ─────────────────────────────────
@@ -471,20 +502,104 @@ export function canChangeTaskStatus(
  * full Prisma row) and the task drawer (which has the JSON response) can ask the
  * same questions of the same function.
  */
-export type ApprovableTask = {
+export type ApprovableTask = TaskOwnership & {
   status: TaskStatus;
   createdById: string;
-  assignees: { userId: string }[];
-  workerId: string | null;
+  /** How far the open review has climbed. Absent on old rows / old payloads = 0. */
+  approvalStage?: number | null;
 };
+
+/**
+ * The ordered approval chain for a task: who signs it off, in what order.
+ *
+ * DERIVED from the people already on the task rather than stored, so delegating
+ * work automatically lengthens the chain and there is no separate chain editor to
+ * keep in sync with the assignees.
+ *
+ * The order is execution → accountability → briefing:
+ *
+ *   workers (submit) → assignees (stage 0) → creator (stage 1)
+ *
+ * which is exactly the agency's flow: a Designer hands in work, the Art Director
+ * who delegated it signs it off, and then the Account Manager who briefed it
+ * gives final approval.
+ *
+ * Two rules shape the result, and both exist to stop the chain deadlocking:
+ *
+ *  1. The SUBMITTER is never in their own chain. A worker who is also an assignee
+ *     would otherwise generate a stage that only they could fill, and nobody may
+ *     approve their own submission — the review would be stuck forever.
+ *  2. Each person appears ONCE, at their earliest position. A task where the Art
+ *     Director is both creator and assignee is a one-stage chain, not a chain
+ *     where the same person has to click Approve twice.
+ *
+ * A task with no delegation therefore collapses to a single stage automatically:
+ * if the assignee submits their own work, the chain is just the creator.
+ *
+ * Returns user ids in stage order. An EMPTY chain means nobody on the task can
+ * approve it — see `canDecideApproval`, which falls back to Task.Approve holders
+ * so such a task is reviewable rather than stranded.
+ */
+export function approvalChain(
+  task: ApprovableTask,
+  submitterId: string | null | undefined
+): string[] {
+  const chain: string[] = [];
+  const seen = new Set<string>();
+  if (submitterId) seen.add(submitterId);
+
+  for (const id of [...task.assignees.map((a) => a.userId), task.createdById]) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    chain.push(id);
+  }
+  return chain;
+}
+
+/**
+ * Whose turn it is right now, or null if the chain is exhausted / empty.
+ *
+ * `stage` is clamped rather than trusted: a task whose assignees changed while a
+ * review was open can carry a stage past the end of its (re-derived) chain, and
+ * returning null there would strand it. Callers treat null as "no named approver
+ * — fall back to permission holders".
+ */
+export function currentApprover(
+  task: ApprovableTask,
+  submitterId: string | null | undefined
+): string | null {
+  const chain = approvalChain(task, submitterId);
+  if (chain.length === 0) return null;
+  const stage = Math.max(0, task.approvalStage ?? 0);
+  return chain[stage] ?? chain[chain.length - 1] ?? null;
+}
+
+/**
+ * Whether approving at the current stage would finish the task.
+ *
+ * The single place that answers "does this click write DONE?", so the API and
+ * the button label cannot disagree about whether one more approval is coming.
+ */
+export function isFinalStage(
+  task: ApprovableTask,
+  submitterId: string | null | undefined
+): boolean {
+  const chain = approvalChain(task, submitterId);
+  if (chain.length === 0) return true;
+  return (Math.max(0, task.approvalStage ?? 0)) >= chain.length - 1;
+}
 
 /**
  * Who may hand a task in for review.
  *
- * The people doing the work: the worker execution was delegated to, and the
+ * The people doing the work: the workers execution was delegated to, and the
  * assignees who stay accountable for it. Mirrors canChangeTaskStatus — if you
  * are entitled to report on the work, you are entitled to submit it — with the
  * same deliberate absence of a super-admin bypass on an owned task.
+ *
+ * On a task with several workers any one of them may submit. The submission
+ * records who did (`submittedById`), so shared work still has a named author on
+ * every attempt.
  */
 export function canSubmitForApproval(
   user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
@@ -494,30 +609,61 @@ export function canSubmitForApproval(
 }
 
 /**
- * Who may approve or reject a task sitting in WAITING_APPROVAL.
+ * Who may approve or reject a task sitting in WAITING_APPROVAL, AT THE STAGE it
+ * has currently reached.
  *
- * Three ways to qualify:
- *  - the CREATOR, who briefed the work and is the default reviewer;
- *  - an ASSIGNEE, who is accountable for the outcome (this is the Art Director
- *    who delegated execution to a designer and now signs the result off);
- *  - a holder of `Task.Approve` — Operations Manager and CEO via super-admin,
- *    plus Account Manager and Art Director, who review as a matter of role.
+ * Approval is a sequential chain, not a pool of eligible managers — see
+ * `approvalChain`. Only the approver whose turn it is may decide, which is what
+ * makes "the Art Director sees it first, then the Account Manager" true rather
+ * than advisory. Holding `Task.Approve` is NOT by itself sufficient: an unrelated
+ * Account Manager elsewhere in the agency is not on this task's chain and cannot
+ * short-circuit the Art Director's review.
  *
- * Unlike status reporting this DOES admit super admins: the requirement puts the
- * Operations Manager and CEO on the approval path explicitly, and an approval
- * that nobody senior can unblock is how tasks get stuck when someone is on leave.
+ * Two deliberate escapes from the strict chain:
  *
- * The one hard exclusion is self-approval — see canApproveTask's caller and
- * `wouldSelfApprove` below. A worker cannot sign off their own submission, which
- * is the entire point of having an approval step.
+ *  - SUPER ADMINS (CEO, Operations Manager) may decide any stage. An approval
+ *    nobody senior can unblock is how work gets stuck when someone is on leave.
+ *    Their out-of-turn approvals are recorded as overrides — see
+ *    `isChainOverride` and TaskApprovalStep.isOverride.
+ *  - A task with an EMPTY chain (the submitter is the only person on it) falls
+ *    back to `Task.Approve` holders, so it is reviewable rather than stranded.
+ *
+ * The one hard exclusion is self-approval, which no escape overrides — see
+ * `wouldSelfApprove`. A worker cannot sign off their own submission, which is the
+ * entire point of having an approval step.
  */
 export function isApproverFor(
   user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
-  task: ApprovableTask
+  task: ApprovableTask,
+  submitterId?: string | null
 ): boolean {
-  if (task.createdById === user.id) return true;
-  if (task.assignees.some((a) => a.userId === user.id)) return true;
-  return can(user, "Task.Approve");
+  const chain = approvalChain(task, submitterId);
+
+  // Nobody on the task can review it — fall back to the permission so the work
+  // is not stranded with no possible approver.
+  if (chain.length === 0) return can(user, "Task.Approve");
+
+  if (currentApprover(task, submitterId) === user.id) return true;
+
+  // The leave / absence escape hatch.
+  return user.isSuperAdmin;
+}
+
+/**
+ * Whether this user acting now would be jumping the queue — a super admin
+ * deciding a stage that belongs to somebody else.
+ *
+ * Drives TaskApprovalStep.isOverride and the wording in the activity log, so an
+ * override reads differently from the named approver having actually reviewed it.
+ */
+export function isChainOverride(
+  user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
+  task: ApprovableTask,
+  submitterId?: string | null
+): boolean {
+  const chain = approvalChain(task, submitterId);
+  if (chain.length === 0) return false;
+  return currentApprover(task, submitterId) !== user.id;
 }
 
 /**
@@ -553,7 +699,7 @@ export function canDecideApproval(
   activeSubmission: { submittedById: string } | null | undefined
 ): boolean {
   if (task.status !== "WAITING_APPROVAL") return false;
-  if (!isApproverFor(user, task)) return false;
+  if (!isApproverFor(user, task, activeSubmission?.submittedById)) return false;
   return !wouldSelfApprove(user, activeSubmission);
 }
 

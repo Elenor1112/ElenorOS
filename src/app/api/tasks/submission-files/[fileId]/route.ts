@@ -102,8 +102,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const task = await db.task.findUnique({
       where: { id: meta.taskId },
       select: {
-        status: true, createdById: true, workerId: true,
+        status: true, createdById: true,
         assignees: { select: { userId: true } },
+        workers: { select: { userId: true } },
       },
     });
     if (!task || !canSubmitForApproval(user, task)) {

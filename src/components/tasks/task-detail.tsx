@@ -74,14 +74,24 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   // Status is the assigned employee's to report — see canChangeTaskStatus in
   // lib/tasks.ts, which the API enforces. Mirrored here so a manager sees the
   // status as read-only text rather than a dropdown that would 403 on change.
+  // The task's workers, oldest first — the order the API returns them in.
+  const workers: any[] = React.useMemo(
+    () => (task?.workers ?? []).map((w: any) => w.user),
+    [task]
+  );
+  const workerIds: string[] = React.useMemo(() => workers.map((w) => w.id), [workers]);
+
   const canSetStatus = task
     ? canChangeTaskStatus(me, {
         assignees: (task.assignees ?? []).map((a: any) => ({ userId: a.user.id })),
-        workerId: task.workerId ?? null,
+        workers: workerIds.map((userId) => ({ userId })),
       })
     : false;
+  // Adding a second worker to a staffed task is a CHANGE to existing delegation,
+  // which is the same rule the API applies — mirrored here so the plus button
+  // never offers something that would 403.
   const canSetWorker =
-    can(task?.workerId ? "Task.ChangeWorker" : "Task.AssignWorker") ||
+    can(workerIds.length ? "Task.ChangeWorker" : "Task.AssignWorker") ||
     (can("Task.DelegateOwnTasks") && isAssignee);
 
   // While a review is open (or the task is approved and closed) the status is not
@@ -122,13 +132,30 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   // Moving to In Progress without a worker prompts for one, which is the
   // delegation moment the workflow is built around.
   const [promptWorker, setPromptWorker] = React.useState(false);
+  // Whether the "add another worker" picker is open. Extra workers are the
+  // exception, so the picker stays out of the way until asked for.
+  const [addingWorker, setAddingWorker] = React.useState(false);
 
   function changeStatus(status: TaskStatus) {
-    if (status === "IN_PROGRESS" && !task?.workerId && canSetWorker && workerCandidates.length) {
+    if (status === "IN_PROGRESS" && !workerIds.length && canSetWorker && workerCandidates.length) {
       setPromptWorker(true);
     }
     patch.mutate({ status });
   }
+
+  function addWorker(userId: string) {
+    setAddingWorker(false);
+    setPromptWorker(false);
+    if (!userId || workerIds.includes(userId)) return;
+    patch.mutate({ workerIds: [...workerIds, userId] });
+  }
+
+  function removeWorker(userId: string) {
+    patch.mutate({ workerIds: workerIds.filter((id) => id !== userId) });
+  }
+
+  // Only people not already on the task can be added.
+  const addableWorkers = workerCandidates.filter((u: any) => !workerIds.includes(u.id));
 
   const [comment, setComment] = React.useState("");
   const addComment = useMutation({
@@ -300,37 +327,96 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
                     <AvatarGroup users={task.assignees.map((a: any) => a.user)} size={26} />
                   ) : <span className="text-sm text-muted-foreground">Unassigned</span>}
                 </MetaRow>
-                <MetaRow label="Worker">
-                  {canSetWorker && workerCandidates.length ? (
-                    <Select
-                      value={task.workerId ?? ""}
-                      onChange={(e) => {
-                        setPromptWorker(false);
-                        patch.mutate({ workerId: e.target.value || null });
-                      }}
-                      className={`h-8 ${promptWorker && !task.workerId ? "ring-1 ring-warning" : ""}`}
+                {/* A task can be executed by several people. They are equal —
+                    any of them can report status and submit the work — so the
+                    list is a flat set of chips with no "primary" slot. */}
+                <MetaRow label={workers.length > 1 ? "Workers" : "Worker"} wide={canSetWorker}>
+                  {canSetWorker ? (
+                    <div
+                      className={`flex flex-wrap items-center gap-1.5 ${
+                        promptWorker && !workers.length ? "rounded-md p-1 ring-1 ring-warning" : ""
+                      }`}
                     >
-                      <option value="">— No worker —</option>
-                      {workerCandidates.map((u: any) => (
-                        <option key={u.id} value={u.id}>
-                          {fullName(u)}{u.jobTitle ? ` · ${u.jobTitle}` : ""}
-                        </option>
+                      {workers.map((w: any) => (
+                        <span
+                          key={w.id}
+                          title={w.jobTitle ? `${fullName(w)} · ${w.jobTitle}` : fullName(w)}
+                          className="flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 py-1 pl-1 pr-1.5 text-xs text-primary"
+                        >
+                          <Avatar
+                            firstName={w.firstName}
+                            lastName={w.lastName}
+                            src={w.avatarUrl}
+                            size={20}
+                          />
+                          {fullName(w)}
+                          <button
+                            type="button"
+                            disabled={patch.isPending}
+                            onClick={() => removeWorker(w.id)}
+                            aria-label={`Remove ${fullName(w)}`}
+                            className="rounded-full p-0.5 hover:bg-primary/20 disabled:opacity-60"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </span>
                       ))}
-                    </Select>
-                  ) : task.worker ? (
-                    <span className="flex items-center gap-2 text-sm">
-                      <Avatar
-                        firstName={task.worker.firstName}
-                        lastName={task.worker.lastName}
-                        src={task.worker.avatarUrl}
-                        size={24}
-                      />
-                      {fullName(task.worker)}
-                    </span>
+
+                      {/* The picker replaces the plus button while open, so the
+                          row never grows two controls doing the same job. */}
+                      {addingWorker ? (
+                        <Select
+                          autoFocus
+                          value=""
+                          disabled={patch.isPending}
+                          onChange={(e) => addWorker(e.target.value)}
+                          onBlur={() => setAddingWorker(false)}
+                          className="h-8 w-auto"
+                        >
+                          <option value="">Select a person…</option>
+                          {addableWorkers.map((u: any) => (
+                            <option key={u.id} value={u.id}>
+                              {fullName(u)}{u.jobTitle ? ` · ${u.jobTitle}` : ""}
+                            </option>
+                          ))}
+                        </Select>
+                      ) : (
+                        addableWorkers.length > 0 && (
+                          <button
+                            type="button"
+                            disabled={patch.isPending}
+                            onClick={() => setAddingWorker(true)}
+                            title={workers.length ? "Add another worker" : "Assign a worker"}
+                            className="flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-60"
+                          >
+                            <Plus className="size-3" />
+                            {workers.length ? "Add" : "Assign"}
+                          </button>
+                        )
+                      )}
+
+                      {!workers.length && !addableWorkers.length && !addingWorker && (
+                        <span className="text-sm text-muted-foreground">Not delegated</span>
+                      )}
+                    </div>
+                  ) : workers.length ? (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                      {workers.map((w: any) => (
+                        <span key={w.id} className="flex items-center gap-2 text-sm">
+                          <Avatar
+                            firstName={w.firstName}
+                            lastName={w.lastName}
+                            src={w.avatarUrl}
+                            size={24}
+                          />
+                          {fullName(w)}
+                        </span>
+                      ))}
+                    </div>
                   ) : (
                     <span className="text-sm text-muted-foreground">Not delegated</span>
                   )}
-                  {promptWorker && !task.workerId && (
+                  {promptWorker && !workers.length && (
                     <p className="mt-1 text-[11px] text-warning">
                       Select who will carry out this work.
                     </p>

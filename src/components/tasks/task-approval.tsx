@@ -12,7 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatExactDateTime, fullName } from "@/lib/utils";
 import { useSession } from "@/components/session-context";
-import { canSubmitForApproval, canDecideApproval, isApproverFor, wouldSelfApprove } from "@/lib/rbac";
+import {
+  canSubmitForApproval, canDecideApproval, isApproverFor, wouldSelfApprove,
+  approvalChain, currentApprover, isFinalStage, isChainOverride,
+} from "@/lib/rbac";
 import type { SessionUser } from "@/lib/rbac";
 
 /**
@@ -34,8 +37,9 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
   const shape = {
     status: task.status,
     createdById: task.createdById,
+    approvalStage: task.approvalStage ?? 0,
     assignees: (task.assignees ?? []).map((a: any) => ({ userId: a.user?.id ?? a.userId })),
-    workerId: task.workerId ?? null,
+    workers: (task.workers ?? []).map((w: any) => ({ userId: w.user?.id ?? w.userId })),
   };
 
   const submissions: any[] = task.submissions ?? [];
@@ -47,7 +51,31 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
   const canDecide = canDecideApproval(me, shape, openSubmission);
   // A reviewer looking at their own submission gets the explanation rather than
   // silence — otherwise the panel looks broken to the person who submitted.
-  const blockedBySelf = underReview && isApproverFor(me, shape) && wouldSelfApprove(me, openSubmission);
+  const blockedBySelf =
+    underReview &&
+    isApproverFor(me, shape, openSubmission?.submittedById) &&
+    wouldSelfApprove(me, openSubmission);
+
+  // Chain state. Everyone on the task sees where the work has got to, not just
+  // the person whose turn it is — "waiting on the Art Director" is the answer to
+  // the question the Account Manager opens this panel to ask.
+  const submitterId = openSubmission?.submittedById ?? null;
+  const chain = approvalChain(shape, submitterId);
+  const multiStage = chain.length > 1;
+  const pendingApproverId = underReview ? currentApprover(shape, submitterId) : null;
+  const finalStage = isFinalStage(shape, submitterId);
+  // A super admin acting out of turn is told so before they click, rather than
+  // discovering it in the audit log afterwards.
+  const overriding = canDecide && isChainOverride(me, shape, submitterId);
+
+  const people = new Map<string, any>();
+  for (const a of task.assignees ?? []) if (a.user) people.set(a.user.id, a.user);
+  for (const w of task.workers ?? []) if (w.user) people.set(w.user.id, w.user);
+  if (task.createdBy) people.set(task.createdBy.id, task.createdBy);
+  const nameOf = (id: string) => {
+    const u = people.get(id);
+    return u ? fullName(u) : "another approver";
+  };
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["task", taskId] });
@@ -77,7 +105,25 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
         />
       )}
 
-      {canDecide && <DecisionControls taskId={taskId} onDone={invalidate} />}
+      {underReview && multiStage && (
+        <ChainProgress
+          chain={chain}
+          stage={shape.approvalStage}
+          approvals={openSubmission?.approvals ?? []}
+          nameOf={nameOf}
+        />
+      )}
+
+      {canDecide && (
+        <DecisionControls
+          taskId={taskId}
+          onDone={invalidate}
+          finalStage={finalStage}
+          nextApprover={finalStage ? null : nameOf(chain[shape.approvalStage + 1] ?? "")}
+          overriding={overriding}
+          overriddenName={overriding && pendingApproverId ? nameOf(pendingApproverId) : null}
+        />
+      )}
 
       {blockedBySelf && (
         <p className="mt-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
@@ -87,7 +133,9 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
 
       {underReview && !canDecide && !blockedBySelf && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Waiting for an approver to review the submission above.
+          {pendingApproverId
+            ? `Waiting for ${nameOf(pendingApproverId)} to review the submission above.`
+            : "Waiting for an approver to review the submission above."}
         </p>
       )}
 
@@ -111,6 +159,70 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
           </div>
         </details>
       )}
+    </div>
+  );
+}
+
+/**
+ * The approval chain, and how far the work has climbed it.
+ *
+ * Rendered only for multi-stage chains — on a single-approver task it would be a
+ * row saying "one person needs to approve this", which the Approve button
+ * already communicates.
+ */
+function ChainProgress({
+  chain, stage, approvals, nameOf,
+}: {
+  chain: string[];
+  stage: number;
+  approvals: any[];
+  nameOf: (id: string) => string;
+}) {
+  const byStage = new Map<number, any>(approvals.map((a) => [a.stage, a]));
+
+  return (
+    <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        Approval chain
+      </p>
+      <ol className="space-y-1.5">
+        {chain.map((id, i) => {
+          const done = i < stage;
+          const current = i === stage;
+          const step = byStage.get(i);
+          return (
+            <li key={id} className="flex items-center gap-2 text-sm">
+              <span
+                className={`flex size-4 shrink-0 items-center justify-center rounded-full border text-[9px] ${
+                  done
+                    ? "border-success bg-success text-success-foreground"
+                    : current
+                      ? "border-primary text-primary"
+                      : "border-border text-muted-foreground"
+                }`}
+              >
+                {done ? "✓" : i + 1}
+              </span>
+              <span className={done ? "text-muted-foreground line-through" : ""}>{nameOf(id)}</span>
+              {current && (
+                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                  Waiting
+                </span>
+              )}
+              {step?.isOverride && (
+                <span className="rounded bg-warning/10 px-1.5 py-0.5 text-[10px] text-warning">
+                  Override
+                </span>
+              )}
+              {step?.createdAt && (
+                <span className="ml-auto text-[10px] text-muted-foreground">
+                  {formatExactDateTime(step.createdAt)}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -185,8 +297,23 @@ function SubmissionCard({ submission, label }: { submission: any; label: string 
   );
 }
 
-/** Approve / request changes. A rejection reason is required, as the API insists. */
-function DecisionControls({ taskId, onDone }: { taskId: string; onDone: () => void }) {
+/**
+ * Approve / request changes. A rejection reason is required, as the API insists.
+ *
+ * The approve button says what it will actually DO. Mid-chain it reads "Approve &
+ * send on", because a button labelled "Approve" that leaves the task in
+ * Waiting-for-approval looks like it failed.
+ */
+function DecisionControls({
+  taskId, onDone, finalStage, nextApprover, overriding, overriddenName,
+}: {
+  taskId: string;
+  onDone: () => void;
+  finalStage: boolean;
+  nextApprover: string | null;
+  overriding: boolean;
+  overriddenName: string | null;
+}) {
   const [rejecting, setRejecting] = React.useState(false);
   const [comment, setComment] = React.useState("");
 
@@ -194,7 +321,13 @@ function DecisionControls({ taskId, onDone }: { taskId: string; onDone: () => vo
     mutationFn: (body: { decision: "approve" | "reject"; comment?: string }) =>
       apiSend(`/api/tasks/${taskId}/approval`, "POST", body),
     onSuccess: (_d, vars) => {
-      toast.success(vars.decision === "approve" ? "Task approved" : "Sent back for changes");
+      toast.success(
+        vars.decision === "reject"
+          ? "Sent back for changes"
+          : finalStage
+            ? "Task approved"
+            : `Approved — sent to ${nextApprover ?? "the next approver"}`
+      );
       setRejecting(false);
       setComment("");
       onDone();
@@ -204,6 +337,17 @@ function DecisionControls({ taskId, onDone }: { taskId: string; onDone: () => vo
 
   return (
     <div className="mt-2 space-y-2">
+      {overriding && (
+        <p className="rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+          This is waiting on {overriddenName ?? "another approver"}. Deciding it now is
+          recorded as an override.
+        </p>
+      )}
+      {!finalStage && !overriding && (
+        <p className="text-xs text-muted-foreground">
+          Your approval sends this to {nextApprover ?? "the next approver"} for final sign-off.
+        </p>
+      )}
       {rejecting ? (
         <>
           <Textarea
@@ -233,7 +377,8 @@ function DecisionControls({ taskId, onDone }: { taskId: string; onDone: () => vo
             disabled={decide.isPending}
             onClick={() => decide.mutate({ decision: "approve" })}
           >
-            <ThumbsUp className="mr-1.5 size-3.5" /> Approve
+            <ThumbsUp className="mr-1.5 size-3.5" />
+            {finalStage ? "Approve" : "Approve & send on"}
           </Button>
           <Button size="sm" variant="outline" onClick={() => setRejecting(true)}>
             <RotateCcw className="mr-1.5 size-3.5" /> Request changes

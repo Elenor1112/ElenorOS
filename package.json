@@ -16,6 +16,7 @@
     "db:update-hours": "tsx prisma/update-working-hours.ts",
     "db:normalize-deadlines": "tsx prisma/normalize-deadlines.ts",
     "db:sync-client-hierarchy": "tsx prisma/sync-client-hierarchy.ts --apply",
+    "db:backfill-workers": "tsx prisma/backfill-task-workers.ts --apply",
     "db:sync-triggers": "tsx prisma/sync-triggers.ts",
     "db:studio": "prisma studio"
   },

@@ -5,7 +5,7 @@ import { requireUser, requirePermission, audit, toErrorResponse, ApiError } from
 import { can } from "@/lib/rbac";
 import {
   nextTaskCode, logActivity, taskVisibilityFilter, parseDeadline, lifecycleStamps,
-  isAssignableBy, recordWorkerChange, resolveTaskClientId,
+  isAssignableBy, resolveTaskClientId,
 } from "@/lib/tasks";
 import { notifyMany } from "@/lib/notify";
 import type { Prisma, TaskStatus } from "@prisma/client";
@@ -38,7 +38,12 @@ export async function GET(req: NextRequest) {
     if (mine) {
       // "Mine" covers both accountability and execution, so a delegated task
       // shows up for the designer actually doing it.
-      and.push({ OR: [{ assignees: { some: { userId: user.id } } }, { workerId: user.id }] });
+      and.push({
+        OR: [
+          { assignees: { some: { userId: user.id } } },
+          { workers: { some: { userId: user.id } } },
+        ],
+      });
     }
 
     const where: Prisma.TaskWhereInput = {
@@ -71,7 +76,10 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         assignees: { include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } } },
-        worker: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        workers: {
+          include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+          orderBy: { assignedAt: "asc" },
+        },
         labels: { include: { label: true } },
         project: { select: { id: true, name: true } },
         client: { select: { id: true, company: true } },
@@ -110,6 +118,9 @@ const createSchema = z.object({
   deadline: z.string().optional().nullable(),
   estimatedHours: z.number().optional().nullable(),
   assigneeIds: z.array(z.string()).default([]),
+  // The worker set. `workerId` is the pre-multi-worker form, still accepted from
+  // older clients and folded into `workerIds` below.
+  workerIds: z.array(z.string()).optional(),
   workerId: z.string().optional().nullable(),
   labelIds: z.array(z.string()).default([]),
 });
@@ -126,12 +137,20 @@ export async function POST(req: NextRequest) {
         throw new ApiError(403, "You cannot assign tasks to one of the selected people.");
       }
     }
-    if (data.workerId) {
+    // Collapse the legacy single field into the set form, so everything below
+    // works one way. `workerIds` wins if both are somehow sent.
+    const workerIds = [
+      ...new Set(data.workerIds ?? (data.workerId ? [data.workerId] : [])),
+    ];
+
+    if (workerIds.length) {
       if (!can(user, "Task.AssignWorker")) {
         throw new ApiError(403, "Missing permission: Task.AssignWorker");
       }
-      if (!(await isAssignableBy(user, data.workerId))) {
-        throw new ApiError(403, "You cannot assign that person as the worker.");
+      for (const workerId of workerIds) {
+        if (!(await isAssignableBy(user, workerId))) {
+          throw new ApiError(403, "You cannot assign that person as the worker.");
+        }
       }
     }
 
@@ -161,14 +180,14 @@ export async function POST(req: NextRequest) {
         clientId,
         departmentId: data.departmentId || null,
         parentId: data.parentId || null,
-        workerId: data.workerId || null,
         deadline: data.deadline ? parseDeadline(data.deadline) : null,
         estimatedHours: data.estimatedHours ?? null,
         createdById: user.id,
         assignees: { create: data.assigneeIds.map((userId) => ({ userId })) },
+        workers: { create: workerIds.map((userId) => ({ userId, assignedAt: now })) },
         labels: { create: data.labelIds.map((labelId) => ({ labelId })) },
       },
-      include: { assignees: true },
+      include: { assignees: true, workers: true },
     });
 
     await logActivity({ actorId: user.id, taskId: task.id, verb: "created" });
@@ -188,13 +207,23 @@ export async function POST(req: NextRequest) {
         meta: { startedAt: stamps.startedAt },
       });
     }
-    if (data.workerId) {
-      await recordWorkerChange({ taskId: task.id, workerId: data.workerId, actorId: user.id, at: now });
+    if (workerIds.length) {
+      // The TaskWorker rows were created with the task above, so this only opens
+      // the matching history rows — recordWorkerChange would diff to an empty
+      // set and write nothing.
+      await db.workerAssignment.createMany({
+        data: workerIds.map((workerId) => ({
+          taskId: task.id,
+          workerId,
+          assignedById: user.id,
+          assignedAt: now,
+        })),
+      });
       await logActivity({
         actorId: user.id,
         taskId: task.id,
         verb: "assigned worker",
-        meta: { workerId: data.workerId },
+        meta: { workerIds },
       });
     }
     await audit({
@@ -202,15 +231,16 @@ export async function POST(req: NextRequest) {
       newValue: {
         code, title: data.title,
         assignedAt: stamps.assignedAt ?? null, startedAt: stamps.startedAt ?? null,
-        workerId: data.workerId ?? null,
+        workerIds,
       },
     });
 
-    if (data.workerId && data.workerId !== user.id) {
-      await notifyMany([data.workerId], {
+    const notifyWorkers = workerIds.filter((id) => id !== user.id);
+    if (notifyWorkers.length) {
+      await notifyMany(notifyWorkers, {
         type: "TASK_ASSIGNED",
         title: "You've been assigned to execute a task",
-        body: `${user.firstName} ${user.lastName} assigned you as the worker on "${task.title}" (${code}).`,
+        body: `${user.firstName} ${user.lastName} assigned you as a worker on "${task.title}" (${code}).`,
         link: `/tasks?task=${task.id}`,
         meta: { taskId: task.id, assignedBy: `${user.firstName} ${user.lastName}`, role: "worker" },
       });

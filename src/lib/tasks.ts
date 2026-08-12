@@ -27,9 +27,10 @@ export function taskVisibilityFilter(user: SessionUser): Prisma.TaskWhereInput |
     { assignees: { some: { userId: user.id } } },
     { followers: { some: { userId: user.id } } },
     { createdById: user.id },
-    // The delegated executor sees the task even though they are not an assignee
-    // — this is what puts it on their dashboard and in "my tasks".
-    { workerId: user.id },
+    // A delegated executor sees the task even though they are not an assignee
+    // — this is what puts it on their dashboard and in "my tasks". Matches any
+    // of the task's workers, so all of them see shared work.
+    { workers: { some: { userId: user.id } } },
     // Keep a parent visible when the user only owns one of its subtasks.
     { subtasks: { some: { assignees: { some: { userId: user.id } } } } },
   ];
@@ -220,8 +221,8 @@ export function lifecycleStamps(
 }
 
 /**
- * Who this user may pick as the worker on this task, and whether they may set
- * one at all.
+ * Who this user may put on this task as a worker, and whether they may change
+ * the worker set at all.
  *
  * Three ways to qualify, checked in order:
  *  - `Task.AssignWorker` / `Task.ChangeWorker` — the general grant. Super admins
@@ -231,11 +232,15 @@ export function lifecycleStamps(
  *  - otherwise, no.
  *
  * `settingFirstWorker` distinguishes AssignWorker from ChangeWorker so the two
- * can be granted independently.
+ * can be granted independently. With a set of workers, "first" means the task
+ * had none: putting a SECOND person on a staffed task is a change to existing
+ * delegation, not a first assignment, so it needs ChangeWorker. That keeps a
+ * role granted only AssignWorker from quietly gaining the ability to reshuffle
+ * a team someone else picked.
  */
 export function workerAuthorization(
   user: SessionUser,
-  task: { workerId: string | null; assignees: { userId: string }[] },
+  task: { assignees: { userId: string }[] },
   opts: { settingFirstWorker: boolean }
 ): { allowed: boolean; reason?: string; candidates: Prisma.UserWhereInput } {
   const permission = opts.settingFirstWorker ? "Task.AssignWorker" : "Task.ChangeWorker";
@@ -300,31 +305,82 @@ export async function isAssignableBy(user: SessionUser, candidateId: string) {
 }
 
 /**
- * Record a worker change in the append-only history and move the pointer.
+ * Reconcile a task's worker set and record the change in the append-only
+ * history.
  *
- * Closes the currently-open history row before opening the new one, so the
- * timeline never has two active workers and "how long did this person hold it"
- * is answerable directly.
+ * Diffs against whoever is currently on the task rather than closing the whole
+ * timeline: a worker who stays across the change keeps their original open
+ * history row, so "how long did this person hold it" stays answerable. Only
+ * people actually leaving get an `unassignedAt`, and only people actually
+ * arriving get a new row.
+ *
+ * Returns the diff so callers can log and notify exactly the people who changed
+ * — a no-op reconcile notifies nobody.
  */
 export async function recordWorkerChange(opts: {
   taskId: string;
-  workerId: string | null;
+  workerIds: string[];
   actorId: string;
   at?: Date;
-}) {
+}): Promise<{ added: string[]; removed: string[] }> {
   const at = opts.at ?? new Date();
-  await db.workerAssignment.updateMany({
-    where: { taskId: opts.taskId, unassignedAt: null },
-    data: { unassignedAt: at },
+  // Duplicate ids in the payload would violate the composite PK on insert.
+  const next = [...new Set(opts.workerIds)];
+
+  const current = await db.taskWorker.findMany({
+    where: { taskId: opts.taskId },
+    select: { userId: true },
   });
-  await db.workerAssignment.create({
-    data: {
-      taskId: opts.taskId,
-      workerId: opts.workerId,
-      assignedById: opts.actorId,
-      assignedAt: at,
-    },
+  const currentIds = current.map((w) => w.userId);
+
+  const added = next.filter((id) => !currentIds.includes(id));
+  const removed = currentIds.filter((id) => !next.includes(id));
+
+  if (!added.length && !removed.length) return { added, removed };
+
+  await db.$transaction(async (tx) => {
+    if (removed.length) {
+      await tx.taskWorker.deleteMany({
+        where: { taskId: opts.taskId, userId: { in: removed } },
+      });
+      // Close only the leavers' open rows — the stayers' remain open.
+      await tx.workerAssignment.updateMany({
+        where: { taskId: opts.taskId, unassignedAt: null, workerId: { in: removed } },
+        data: { unassignedAt: at },
+      });
+    }
+
+    if (added.length) {
+      await tx.taskWorker.createMany({
+        data: added.map((userId) => ({ taskId: opts.taskId, userId, assignedAt: at })),
+        skipDuplicates: true,
+      });
+      await tx.workerAssignment.createMany({
+        data: added.map((workerId) => ({
+          taskId: opts.taskId,
+          workerId,
+          assignedById: opts.actorId,
+          assignedAt: at,
+        })),
+      });
+    }
+
+    // Emptying the set is itself an event: a null-worker row marks the moment
+    // the task went unstaffed, the same way it did when there was one pointer.
+    if (!next.length && removed.length) {
+      await tx.workerAssignment.create({
+        data: {
+          taskId: opts.taskId,
+          workerId: null,
+          assignedById: opts.actorId,
+          assignedAt: at,
+          unassignedAt: at,
+        },
+      });
+    }
   });
+
+  return { added, removed };
 }
 
 /** Log an activity entry against a task. */

@@ -134,12 +134,15 @@ model User {
   // Relations
   createdTasks      Task[]              @relation("TaskCreatedBy")
   assignedTasks     TaskAssignee[]
+  workerOn          TaskWorker[]        @relation("TaskWorkers")
+  /// Deprecated alongside `Task.workerId`; kept only to satisfy the relation.
   workedTasks       Task[]              @relation("TaskWorker")
   workerAssignments WorkerAssignment[]  @relation("WorkerAssignmentWorker")
   workerDelegations WorkerAssignment[]  @relation("WorkerAssignmentAssignedBy")
   approvedTasks     Task[]              @relation("TaskApprovedBy")
   taskSubmissions   TaskSubmission[]     @relation("TaskSubmissionAuthor")
   taskDecisions     TaskSubmission[]     @relation("TaskSubmissionDecider")
+  taskApprovalSteps TaskApprovalStep[]   @relation("TaskApprovalStepApprover")
   taskEvidenceFiles TaskSubmissionFile[] @relation("TaskSubmissionFileUploader")
   taskFollows       TaskFollower[]
   comments          Comment[]
@@ -378,16 +381,25 @@ model Task {
   createdById String
   createdBy   User   @relation("TaskCreatedBy", fields: [createdById], references: [id])
 
-  /// The person actually executing the work, as distinct from `assignees`, who
+  /// The people actually executing the work, as distinct from `assignees`, who
   /// stay accountable for it. An Art Director assigned a task delegates the
-  /// execution to a designer by setting this; the Art Director remains an
-  /// assignee. Nullable — most tasks never need the distinction, and every
-  /// pre-existing task keeps working with it unset.
+  /// execution to one or more designers by setting these; the Art Director
+  /// remains an assignee. Empty on most tasks — the distinction is optional, and
+  /// every pre-existing task keeps working with no worker at all.
   ///
-  /// Deliberately a single relation rather than a join table: today the rule is
-  /// one worker per task. `WorkerAssignment` below carries the history, so
-  /// widening this to many workers later means adding a join table without
-  /// having to reconstruct the audit trail.
+  /// All workers on a task are equal: each may report status and submit the work
+  /// for approval, the same rights a lone worker has always had. There is no
+  /// "primary" worker.
+  workers TaskWorker[]
+
+  /// DEPRECATED — read only, and only as a fallback for rows written before
+  /// workers became a set. `TaskWorker` above is the source of truth; the
+  /// backfill in migrations/…_multi_worker copied every value here into a
+  /// `TaskWorker` row, and nothing writes this column any more.
+  ///
+  /// Retained rather than dropped so a deploy that rolls back mid-flight still
+  /// finds the old column populated. Safe to remove once a release has shipped
+  /// with no reader left.
   workerId String?
   worker   User?   @relation("TaskWorker", fields: [workerId], references: [id])
 
@@ -443,6 +455,21 @@ model Task {
   /// resubmission, because "how long has this been sitting with the approver"
   /// is a question about the open review, not the task's whole history.
   submittedAt DateTime? @db.Timestamptz
+
+  /// How far up the approval chain the open review has climbed.
+  ///
+  /// The chain itself is NOT stored — it is derived from the people already on
+  /// the task (workers → assignees → creator; see approvalChain() in lib/rbac.ts),
+  /// so delegating a task automatically lengthens its chain and no separate
+  /// editor has to be kept in sync with the assignees.
+  ///
+  /// This is the index into that derived list of the approver whose turn it is.
+  /// 0 = the first approver (the Art Director who delegated); each approval
+  /// increments it, and only an approval at the LAST index writes DONE. Reset to
+  /// 0 on submission and on rejection — a bounced task climbs the whole chain
+  /// again, so the Art Director re-checks the fix before it reaches the Account
+  /// Manager. Meaningless unless status is WAITING_APPROVAL.
+  approvalStage Int @default(0)
 
   /// Who signed the task off, and when. Kept on the task (not only on the
   /// submission) so "who approved this?" is answerable without a join, and
@@ -507,18 +534,73 @@ model TaskSubmission {
   files TaskSubmissionFile[]
 
   decision   SubmissionDecision @default(PENDING)
-  /// Who approved or rejected, and why. `comment` carries the rejection reason
-  /// back to the worker — the whole point of bouncing a task rather than fixing
-  /// it silently.
+  /// Who FINALLY resolved the submission, and why. On a multi-stage chain this
+  /// is the last approver (the one whose approval wrote DONE) or whoever
+  /// rejected; the intermediate approvals live in `approvals` below. `comment`
+  /// carries the rejection reason back to the worker — the whole point of
+  /// bouncing a task rather than fixing it silently.
   decidedById String?
   decidedBy   User?     @relation("TaskSubmissionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
   decidedAt   DateTime? @db.Timestamptz
   comment     String?
 
+  /// Every stage sign-off on this submission, in order.
+  ///
+  /// A staged chain collects more than one approval before the work is DONE, and
+  /// `decidedById` is a single column — so the Art Director's sign-off would be
+  /// overwritten by the Account Manager's without this. Keeping them as rows also
+  /// makes "who has approved so far?" answerable while the review is still open,
+  /// which is what the approval panel renders as chain progress.
+  approvals TaskApprovalStep[]
+
   createdAt DateTime @default(now()) @db.Timestamptz
 
   @@index([taskId, createdAt])
   @@index([submittedById])
+}
+
+/// One approver's sign-off at one stage of a submission's approval chain.
+///
+/// Exists because approval is sequential: a designer's work is approved by the
+/// Art Director who delegated it, and only then by the Account Manager who
+/// briefed it. Each of those is a real decision by a real person at a real time,
+/// and collapsing them into TaskSubmission's single `decidedById` would lose
+/// every one but the last.
+///
+/// Only APPROVALS are recorded here — a rejection ends the review outright, so
+/// it is stamped on the submission itself and no further stage rows follow.
+///
+/// Append-only, like the submissions it belongs to. A rejected-and-resubmitted
+/// task gets a NEW submission with a fresh (empty) chain, so these rows are never
+/// rewritten and the trail of who signed off on which attempt stays intact.
+model TaskApprovalStep {
+  id           String         @id @default(cuid())
+  submission   TaskSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
+
+  /// The chain index this sign-off satisfied — matches Task.approvalStage at the
+  /// moment it was made. Stored rather than inferred from row order because the
+  /// derived chain can change shape (a worker is added, an assignee swapped)
+  /// between one stage and the next.
+  stage Int
+
+  approvedById String
+  approvedBy   User   @relation("TaskApprovalStepApprover", fields: [approvedById], references: [id])
+
+  /// Optional note attached to this particular sign-off.
+  comment String?
+
+  /// True when a super admin (CEO / Operations Manager) decided a stage that was
+  /// not theirs — the escape hatch for an approver on leave. Flagged so an
+  /// override is visibly different from the named approver having acted.
+  isOverride Boolean @default(false)
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  /// One sign-off per stage per submission: the guard that stops a double-click
+  /// or two racing requests from advancing the chain twice.
+  @@unique([submissionId, stage])
+  @@index([approvedById])
 }
 
 /// Bytes for an uploaded piece of evidence.
@@ -587,6 +669,26 @@ model WorkerAssignment {
 
   @@index([taskId, assignedAt])
   @@index([workerId])
+}
+
+/// Who is currently executing a task. One row per worker.
+///
+/// The live set; `WorkerAssignment` remains the append-only history of how the
+/// set got that way. Membership carries no rank — see `Task.workers`.
+model TaskWorker {
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+  user   User   @relation("TaskWorkers", fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  /// Kept so the drawer can list workers in the order they were put on, which
+  /// reads as the delegation order rather than an arbitrary shuffle.
+  assignedAt DateTime @default(now()) @db.Timestamptz
+
+  @@id([taskId, userId])
+  // "What is this designer currently executing?" — the workload query, which
+  // moved here from Task.workerId when a task gained multiple workers.
+  @@index([userId])
 }
 
 model TaskAssignee {

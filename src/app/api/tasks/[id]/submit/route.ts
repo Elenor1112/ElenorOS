@@ -30,8 +30,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const task = await db.task.findUnique({
       where: { id },
       select: {
-        id: true, code: true, title: true, status: true, createdById: true, workerId: true,
+        id: true, code: true, title: true, status: true, createdById: true,
         assignees: { select: { userId: true } },
+        workers: { select: { userId: true } },
       },
     });
     if (!task) throw new ApiError(404, "Task not found");

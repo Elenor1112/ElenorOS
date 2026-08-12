@@ -15,7 +15,10 @@ import type { TaskStatus } from "@prisma/client";
 const taskInclude = {
   assignees: { include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, jobTitle: true } } } },
   followers: { include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } } },
-  worker: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, jobTitle: true } },
+  workers: {
+    include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, jobTitle: true } } },
+    orderBy: { assignedAt: "asc" as const },
+  },
   workerHistory: {
     include: {
       worker: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
@@ -79,7 +82,12 @@ const updateSchema = z.object({
   projectId: z.string().optional().nullable(),
   departmentId: z.string().optional().nullable(),
   assigneeIds: z.array(z.string()).optional(),
-  // null clears the worker; undefined leaves it untouched.
+  // The worker set. Empty array clears it; undefined leaves it untouched.
+  workerIds: z.array(z.string()).optional(),
+  // Superseded by `workerIds`, still accepted so a client from before the
+  // multi-worker change keeps working: it means "make this the only worker",
+  // and null still means "clear". Normalized into `workerIds` below, which is
+  // the only form the rest of this handler sees.
   workerId: z.string().optional().nullable(),
   labelIds: z.array(z.string()).optional(),
   // Still accepted so an older client sending it gets the explanatory 403 below
@@ -95,7 +103,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const before = await db.task.findUnique({
       where: { id },
-      include: { assignees: true },
+      include: { assignees: true, workers: true },
     });
     if (!before) throw new ApiError(404, "Task not found");
 
@@ -160,25 +168,49 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
 
-    // `workerId` is deliberately NOT a privileged field: delegating execution is
+    // Workers are deliberately NOT a privileged field: delegating execution is
     // exactly what an Art Director without Task.EditDetails must be able to do.
     // It carries its own permission check instead.
-    const changingWorker = data.workerId !== undefined && data.workerId !== before.workerId;
-    if (changingWorker) {
+    //
+    // Collapse the legacy single `workerId` into the set form first, so there is
+    // exactly one code path below. `workerIds` wins if a client somehow sends
+    // both — it is the field that can express what the caller actually wants.
+    const requestedWorkerIds =
+      data.workerIds !== undefined
+        ? [...new Set(data.workerIds)]
+        : data.workerId !== undefined
+          ? data.workerId
+            ? [data.workerId]
+            : []
+          : undefined;
+
+    const beforeWorkerIds = before.workers.map((w) => w.userId);
+    const addedWorkers = requestedWorkerIds?.filter((id) => !beforeWorkerIds.includes(id)) ?? [];
+    const removedWorkers = requestedWorkerIds
+      ? beforeWorkerIds.filter((id) => !requestedWorkerIds.includes(id))
+      : [];
+    const changingWorkers = addedWorkers.length > 0 || removedWorkers.length > 0;
+
+    if (changingWorkers) {
       const authz = workerAuthorization(user, before, {
-        settingFirstWorker: before.workerId === null,
+        // Only a task with nobody on it is a "first" assignment; adding a second
+        // worker to a staffed task is a change to existing delegation.
+        settingFirstWorker: beforeWorkerIds.length === 0,
       });
       if (!authz.allowed) throw new ApiError(403, authz.reason ?? "Not allowed to set the worker");
 
-      if (data.workerId) {
+      // Only NEWLY added people are validated. Re-sending someone already on the
+      // task must not fail because the actor's scope narrowed since — otherwise
+      // removing one worker could be blocked by an unrelated existing one.
+      for (const workerId of addedWorkers) {
         // The candidate must be someone this user may put on work at all…
-        if (!(await isAssignableBy(user, data.workerId))) {
+        if (!(await isAssignableBy(user, workerId))) {
           throw new ApiError(403, "You cannot assign that person as the worker.");
         }
         // …and must fall inside the narrower delegation scope when it applies
         // (an Art Director delegating is limited to their own department).
         const candidate = await db.user.findFirst({
-          where: { id: data.workerId, ...authz.candidates },
+          where: { id: workerId, ...authz.candidates },
           select: { id: true },
         });
         if (!candidate) {
@@ -257,43 +289,65 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         actualHours: data.actualHours,
         projectId: data.projectId === undefined ? undefined : data.projectId || null,
         departmentId: data.departmentId === undefined ? undefined : data.departmentId || null,
-        workerId: data.workerId === undefined ? undefined : data.workerId || null,
       },
     });
 
-    // Worker history, activity and notification. The pointer moved above; this
-    // records who/when for reporting and tells the worker they are on.
-    if (changingWorker) {
-      const nextWorkerId = data.workerId || null;
-      await recordWorkerChange({ taskId: id, workerId: nextWorkerId, actorId: user.id, at: now });
+    // Worker set, history, activity and notification. recordWorkerChange does the
+    // reconcile and returns who actually moved, so only real changes are logged
+    // and only the people affected are notified.
+    if (changingWorkers) {
+      await recordWorkerChange({
+        taskId: id,
+        workerIds: requestedWorkerIds!,
+        actorId: user.id,
+        at: now,
+      });
 
-      if (nextWorkerId) {
-        const worker = await db.user.findUnique({
-          where: { id: nextWorkerId },
-          select: { firstName: true, lastName: true },
-        });
-        const workerName = worker ? `${worker.firstName} ${worker.lastName}` : "someone";
+      // One lookup covers both the activity meta and the notification text.
+      const movedUsers = await db.user.findMany({
+        where: { id: { in: [...addedWorkers, ...removedWorkers] } },
+        select: { id: true, firstName: true, lastName: true },
+      });
+      const nameOf = (uid: string) => {
+        const u = movedUsers.find((m) => m.id === uid);
+        return u ? `${u.firstName} ${u.lastName}` : "someone";
+      };
+
+      if (addedWorkers.length) {
         await logActivity({
           actorId: user.id,
           taskId: id,
-          verb: before.workerId ? "changed worker" : "assigned worker",
-          meta: { workerId: nextWorkerId, workerName, previousWorkerId: before.workerId },
+          verb: beforeWorkerIds.length ? "added worker" : "assigned worker",
+          meta: {
+            workerIds: addedWorkers,
+            // Kept singular as well so existing activity rendering — which reads
+            // meta.workerName — still shows a name on a single-worker change.
+            workerName: addedWorkers.map(nameOf).join(", "),
+            previousWorkerIds: beforeWorkerIds,
+          },
         });
-        if (nextWorkerId !== user.id) {
-          await notifyMany([nextWorkerId], {
+        await notifyMany(
+          addedWorkers.filter((uid) => uid !== user.id),
+          {
             type: "TASK_ASSIGNED",
             title: "You've been assigned to execute a task",
-            body: `${user.firstName} ${user.lastName} assigned you as the worker on "${before.title}" (${before.code}).`,
+            body: `${user.firstName} ${user.lastName} assigned you as a worker on "${before.title}" (${before.code}).`,
             link: `/tasks?task=${id}`,
             meta: { taskId: id, assignedBy: `${user.firstName} ${user.lastName}`, role: "worker" },
-          });
-        }
-      } else {
+          }
+        );
+      }
+
+      if (removedWorkers.length) {
         await logActivity({
           actorId: user.id,
           taskId: id,
           verb: "removed worker",
-          meta: { previousWorkerId: before.workerId },
+          meta: {
+            workerIds: removedWorkers,
+            workerName: removedWorkers.map(nameOf).join(", "),
+            previousWorkerIds: beforeWorkerIds,
+          },
         });
       }
     }
@@ -383,14 +437,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       oldValue: {
         status: before.status, progress: before.progress,
         assignedAt: before.assignedAt, startedAt: before.startedAt,
-        workerId: before.workerId,
+        workerIds: beforeWorkerIds,
       },
       newValue: {
         status: data.status ?? before.status,
         progress: progress ?? before.progress,
         assignedAt: stamps.assignedAt ?? before.assignedAt,
         startedAt: stamps.startedAt ?? before.startedAt,
-        workerId: changingWorker ? (data.workerId || null) : before.workerId,
+        workerIds: changingWorkers ? requestedWorkerIds! : beforeWorkerIds,
       },
     });
 

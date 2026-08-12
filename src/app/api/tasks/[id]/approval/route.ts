@@ -30,7 +30,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const task = await db.task.findUnique({
       where: { id },
       select: {
-        id: true, code: true, title: true, status: true, createdById: true, workerId: true,
+        id: true, code: true, title: true, status: true, createdById: true,
+        approvalStage: true,
+        workers: { select: { userId: true } },
         assignees: { select: { userId: true } },
       },
     });
@@ -43,23 +45,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       await rejectTask({ user, task, comment: body.comment ?? "" });
     }
 
+    const fresh = await db.task.findUnique({
+      where: { id },
+      select: {
+        id: true, status: true, approvalStatus: true, approvedAt: true, submittedAt: true,
+        approvalStage: true,
+        approvedBy: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+      },
+    });
+
+    // Audited from the row as it actually ended up, not from the decision:
+    // approving part-way up the chain leaves the task in WAITING_APPROVAL, so
+    // assuming "approve means DONE" here would write a false audit entry.
     await audit({
       actorId: user.id,
       action: body.decision === "approve" ? "task.approve" : "task.reject",
       entity: "task",
       entityId: id,
-      oldValue: { status: task.status },
+      oldValue: { status: task.status, approvalStage: task.approvalStage },
       newValue: {
-        status: body.decision === "approve" ? "DONE" : "EDITING",
+        status: fresh?.status,
+        approvalStage: fresh?.approvalStage,
         comment: body.comment?.trim() || undefined,
-      },
-    });
-
-    const fresh = await db.task.findUnique({
-      where: { id },
-      select: {
-        id: true, status: true, approvalStatus: true, approvedAt: true, submittedAt: true,
-        approvedBy: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
       },
     });
 

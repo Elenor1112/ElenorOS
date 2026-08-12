@@ -108,7 +108,10 @@ export async function GET() {
       db.task.findMany({
         where: {
           status: { in: ["TODO", "IN_PROGRESS"] },
-          OR: [{ assignees: { some: { userId: user.id } } }, { workerId: user.id }],
+          OR: [
+            { assignees: { some: { userId: user.id } } },
+            { workers: { some: { userId: user.id } } },
+          ],
           deadline: { lt: tomorrowStart },
         },
         select: { id: true, code: true, title: true, status: true, priority: true, deadline: true },

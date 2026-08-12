@@ -34,7 +34,7 @@ export function KanbanView({
     (task: TaskListItem) =>
       canChangeTaskStatus(me, {
         assignees: task.assignees.map((a) => ({ userId: a.user.id })),
-        workerId: task.worker?.id ?? null,
+        workers: (task.workers ?? []).map((w) => ({ userId: w.user.id })),
       }),
     [me]
   );

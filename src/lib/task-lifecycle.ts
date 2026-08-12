@@ -4,7 +4,8 @@ import { ApiError } from "./api";
 import { logActivity } from "./tasks";
 import { notifyMany } from "./notify";
 import {
-  canSubmitForApproval, isApproverFor, wouldSelfApprove,
+  canSubmitForApproval, isApproverFor, wouldSelfApprove, taskWorkerIds,
+  approvalChain, currentApprover, isFinalStage, isChainOverride,
   type ApprovableTask, type SessionUser,
 } from "./rbac";
 import {
@@ -20,7 +21,14 @@ import type { Prisma, TaskStatus } from "@prisma/client";
  * task drawer, the Kanban drag handler, a direct API call or a future importer.
  * The routes are thin: they authenticate, then delegate to this module.
  *
- * Two rules are absolute and worth stating up front, because they are what the
+ * Approval is a CHAIN, not a single gate: work climbs from the people executing
+ * it to the people accountable for it to the person who briefed it —
+ * Designer submits → Art Director approves → Account Manager approves → DONE.
+ * The chain is derived from the task's own people (see `approvalChain` in
+ * lib/rbac.ts), so delegating a task lengthens it automatically and a task with
+ * no delegation collapses to a single approval.
+ *
+ * Three rules are absolute and worth stating up front, because they are what the
  * whole workflow exists to guarantee:
  *
  *  1. NOBODY reaches DONE by setting the status. Not the worker, not the
@@ -29,6 +37,10 @@ import type { Prisma, TaskStatus } from "@prisma/client";
  *     route rejects `status: "DONE"` outright rather than permission-checking it.
  *  2. A task cannot enter WAITING_APPROVAL without evidence attached. The check
  *     is here, not in the form, so an API caller cannot skip it.
+ *  3. Only the approver whose TURN it is may decide. An approval part-way up the
+ *     chain advances the stage and leaves the task in WAITING_APPROVAL; only the
+ *     last one closes it. Super admins may decide out of turn, recorded as an
+ *     override, so a chain never deadlocks on somebody's absence.
  */
 
 // ─── Statuses ────────────────────────────────────────────────
@@ -164,6 +176,16 @@ const submissionSelect = {
   // Deliberately never selects `data` — payloads are streamed by the file route,
   // so listing evidence cannot accidentally pull megabytes into a JSON response.
   files: { select: { id: true, name: true, mimeType: true, size: true, createdAt: true } },
+  // The stage sign-offs collected so far, oldest first, so the panel can show
+  // "Art Director approved · waiting on Account Manager" while the review is
+  // still open.
+  approvals: {
+    orderBy: { stage: "asc" as const },
+    select: {
+      id: true, stage: true, comment: true, isOverride: true, createdAt: true,
+      approvedBy: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+    },
+  },
 } satisfies Prisma.TaskSubmissionSelect;
 
 /**
@@ -254,6 +276,8 @@ export async function submitForApproval(opts: {
         approvalStatus: "PENDING",
         activeSubmissionId: created.id,
         submittedAt: now,
+        // Every submission climbs the chain from the bottom.
+        approvalStage: 0,
         // A resubmission must not keep the previous approval stamps, or a task
         // bounced after being approved would still name an approver.
         approvedById: null,
@@ -276,7 +300,9 @@ export async function submitForApproval(opts: {
     },
   });
 
-  await notifyMany(await approverIdsFor(task, user.id), {
+  // Stage 0 explicitly: `task` is the pre-submit row, whose approvalStage may
+  // still carry a value from an earlier review.
+  await notifyMany(await approverIdsFor({ ...task, approvalStage: 0 }, user.id, user.id), {
     type: "APPROVAL_REQUIRED",
     title: "Approval needed",
     body: `${user.firstName} ${user.lastName} submitted "${task.title}" (${task.code}) for your approval.`,
@@ -288,10 +314,20 @@ export async function submitForApproval(opts: {
 }
 
 /**
- * Approve a task under review: WAITING_APPROVAL → DONE.
+ * Approve at the current stage of a task's approval chain.
  *
- * The only path to DONE in the entire codebase. Stamps the audit fields on both
- * the submission and the task, and tells the submitter their work was signed off.
+ * Two possible outcomes, and which one happens depends on where in the chain the
+ * task is:
+ *
+ *  - NOT the last stage → the task STAYS in WAITING_APPROVAL, `approvalStage`
+ *    advances, and the next approver is notified. Nothing about the task reads as
+ *    finished, because it is not.
+ *  - the LAST stage → WAITING_APPROVAL → DONE. This is the only path to DONE in
+ *    the entire codebase.
+ *
+ * Every sign-off, intermediate or final, is recorded as a TaskApprovalStep, so
+ * "the Art Director approved this on Tuesday" survives the Account Manager's
+ * later decision instead of being overwritten by it.
  */
 export async function approveTask(opts: {
   user: SessionUser;
@@ -303,15 +339,45 @@ export async function approveTask(opts: {
 
   assertCanDecide(user, task, active);
 
+  const comment = opts.comment?.trim() || null;
+  const stage = Math.max(0, task.approvalStage ?? 0);
+  const final = isFinalStage(task, active.submittedById);
+  const override = isChainOverride(user, task, active.submittedById);
   const now = new Date();
+
   await db.$transaction(async (tx) => {
+    // The stage row is written FIRST and carries a unique [submissionId, stage]
+    // constraint, so two approvers racing on the same stage cannot both advance
+    // the chain — the second hits the constraint and the transaction unwinds.
+    await tx.taskApprovalStep.create({
+      data: {
+        submissionId: active.id,
+        stage,
+        approvedById: user.id,
+        comment,
+        isOverride: override,
+      },
+    });
+
+    if (!final) {
+      // Mid-chain: the review stays open, and the ONLY thing that moves is whose
+      // turn it is. Deliberately leaves status, approvalStatus, progress and
+      // activeSubmissionId alone — the work is not approved yet, and a task that
+      // reported 100% here would be lying to every dashboard that reads it.
+      await tx.task.update({
+        where: { id: task.id },
+        data: { approvalStage: stage + 1 },
+      });
+      return;
+    }
+
     await tx.taskSubmission.update({
       where: { id: active.id },
       data: {
         decision: "APPROVED",
         decidedById: user.id,
         decidedAt: now,
-        comment: opts.comment?.trim() || null,
+        comment,
       },
     });
     await tx.task.update({
@@ -324,6 +390,7 @@ export async function approveTask(opts: {
         approvedAt: now,
         // The review is closed; the trail lives on in `submissions`.
         activeSubmissionId: null,
+        approvalStage: 0,
       },
     });
   });
@@ -331,21 +398,64 @@ export async function approveTask(opts: {
   await logActivity({
     actorId: user.id,
     taskId: task.id,
-    verb: "approved",
-    meta: { submissionId: active.id, comment: opts.comment?.trim() || undefined },
+    verb: final ? "approved" : "approved (pending further approval)",
+    meta: {
+      submissionId: active.id,
+      stage,
+      final,
+      override: override || undefined,
+      comment: comment || undefined,
+    },
   });
 
-  await notifyMany(submitterAndOwners(task, active.submittedById, user.id), {
-    type: "TASK_APPROVED",
-    title: "Task approved",
-    body: `${user.firstName} ${user.lastName} approved "${task.title}" (${task.code}).`,
-    link: `/tasks?task=${task.id}`,
-    meta: { taskId: task.id },
-  });
+  if (final) {
+    await notifyMany(submitterAndOwners(task, active.submittedById, user.id), {
+      type: "TASK_APPROVED",
+      title: "Task approved",
+      body: `${user.firstName} ${user.lastName} approved "${task.title}" (${task.code}).`,
+      link: `/tasks?task=${task.id}`,
+      meta: { taskId: task.id },
+    });
+    return;
+  }
+
+  // Mid-chain: tell the NEXT approver it is their turn, and tell the submitter
+  // their work cleared a stage — otherwise a task sitting at stage 1 looks
+  // identical to one nobody has looked at.
+  const nextTask = { ...task, approvalStage: stage + 1 };
+  const next = currentApprover(nextTask, active.submittedById);
+
+  if (next && next !== user.id) {
+    await notifyMany([next], {
+      type: "APPROVAL_REQUIRED",
+      title: "Approval needed",
+      body: `${user.firstName} ${user.lastName} approved "${task.title}" (${task.code}) — it now needs your approval.`,
+      link: `/tasks?task=${task.id}`,
+      meta: { taskId: task.id, submissionId: active.id },
+    });
+  }
+
+  await notifyMany(
+    [active.submittedById].filter((id) => id !== user.id && id !== next),
+    {
+      type: "TASK_APPROVED",
+      title: "Approval step cleared",
+      body: `${user.firstName} ${user.lastName} approved "${task.title}" (${task.code}). It is now waiting for final approval.`,
+      link: `/tasks?task=${task.id}`,
+      meta: { taskId: task.id },
+    }
+  );
 }
 
 /**
- * Reject a task under review: WAITING_APPROVAL → EDITING.
+ * Reject a task under review: WAITING_APPROVAL → EDITING, from ANY stage.
+ *
+ * A rejection ends the review outright — it does not step back one stage. The
+ * work returns to the worker and, when resubmitted, climbs the chain again from
+ * the beginning (`approvalStage: 0`). That is deliberate: if the Account Manager
+ * bounces work the Art Director already signed off, the Art Director needs to see
+ * the correction before it comes back up, otherwise they are accountable for a
+ * version they never reviewed.
  *
  * A reason is required. Bouncing work back without saying why forces the worker
  * to guess, and the rejection comment is the only channel the workflow gives the
@@ -381,6 +491,8 @@ export async function rejectTask(opts: {
         submittedAt: null,
         approvedById: null,
         approvedAt: null,
+        // Back to the bottom of the chain — see the note above.
+        approvalStage: 0,
       },
     });
   });
@@ -445,33 +557,64 @@ function assertCanDecide(
       "You submitted this work, so you cannot approve it yourself. It needs a decision from another approver."
     );
   }
-  if (!isApproverFor(user, task)) {
+  if (!isApproverFor(user, task, submission.submittedById)) {
+    // Name the person it is actually waiting on. "You can't approve this" on a
+    // task that plainly needs approving reads as a bug; "it is with the Art
+    // Director first" explains the chain and tells them when to expect it.
+    const chain = approvalChain(task, submission.submittedById);
+    const pending = chain.length > 1 ? " This task needs approval in order." : "";
     throw new ApiError(
       403,
-      "Only the person who assigned this task, an assignee, or the Operations Manager / CEO can approve or reject it."
+      `This task is not waiting on you right now.${pending} Only its current approver — or the Operations Manager / CEO — can approve or reject it.`
     );
   }
 }
 
 /**
- * Who to tell that a task needs a decision: the creator and the assignees,
- * minus the person who just submitted.
+ * Who to tell that a task needs a decision: the approver whose turn it is, and
+ * nobody else.
+ *
+ * Only the FIRST link in the chain is notified on submission. Telling the
+ * Account Manager at the same time as the Art Director is what made the old flow
+ * a free-for-all — it invited whoever read the alert first to approve, which is
+ * exactly the ordering this chain exists to impose. The later approvers are
+ * notified as the work reaches them, in `approveTask`.
  *
  * Role-based approvers (Operations Manager, CEO) are deliberately NOT notified
  * individually — they hold Task.Approve over every task in the agency, so
  * notifying them on each submission would bury the alerts that are actually
  * theirs to action. They see the queue instead.
+ *
+ * Falls back to the creator and assignees when the chain is empty, matching the
+ * fallback in `isApproverFor`: those tasks are decided by permission holders, and
+ * silence would leave them with no prompt at all.
  */
-async function approverIdsFor(task: ApprovableTask, actorId: string): Promise<string[]> {
+async function approverIdsFor(
+  task: ApprovableTask,
+  actorId: string,
+  submitterId: string
+): Promise<string[]> {
+  const next = currentApprover(task, submitterId);
+  if (next) return next === actorId ? [] : [next];
+
   const ids = new Set<string>([task.createdById, ...task.assignees.map((a) => a.userId)]);
   ids.delete(actorId);
   return [...ids];
 }
 
-/** The submitter plus the task's owners, minus the actor — for decision news. */
+/**
+ * The submitter plus the task's owners, minus the actor — for decision news.
+ *
+ * Every worker is told, not just whoever submitted: on shared work an approval
+ * or a bounce-back is news to all of them, and the one who did not click submit
+ * would otherwise never hear that the task needs fixing.
+ */
 function submitterAndOwners(task: ApprovableTask, submitterId: string, actorId: string): string[] {
-  const ids = new Set<string>([submitterId, ...task.assignees.map((a) => a.userId)]);
-  if (task.workerId) ids.add(task.workerId);
+  const ids = new Set<string>([
+    submitterId,
+    ...task.assignees.map((a) => a.userId),
+    ...taskWorkerIds(task),
+  ]);
   ids.delete(actorId);
   return [...ids];
 }
