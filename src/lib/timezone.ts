@@ -154,6 +154,36 @@ export function companyToday(timeZone: string = APP_TIMEZONE): string {
 }
 
 /**
+ * How many days a backdatable request may reach into the past.
+ *
+ * Leave and permission requests are the two forms people legitimately file
+ * after the fact — you cannot always request sick leave before falling ill, and
+ * a late arrival is only known once it has happened. Every other scheduling
+ * field stays strictly future-facing.
+ */
+export const BACKDATE_WINDOW_DAYS = 7;
+
+/**
+ * "yyyy-MM-dd" for the earliest day a backdatable request may name: a rolling
+ * week back from the company's today, inclusive of both ends.
+ *
+ * The `min` attribute for the leave / permission date inputs, and the boundary
+ * their routes validate against — the same today/past split as companyToday(),
+ * just shifted by the window.
+ */
+export function backdateFloor(
+  days: number = BACKDATE_WINDOW_DAYS,
+  timeZone: string = APP_TIMEZONE
+): string {
+  const p = zonedParts(new Date(), timeZone);
+  // UTC arithmetic on the company's calendar day: shifting the day number is
+  // DST-proof here because only the y/m/d fields are ever read back out.
+  const d = new Date(Date.UTC(p.year, p.month - 1, p.day - days));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+}
+
+/**
  * Whether a wall-clock input falls before today in the company's zone.
  *
  * Compared at DAY granularity on purpose: a deadline of "today at 09:00" set at
@@ -184,6 +214,32 @@ export function requireFutureDateTime(
   const d = requireUserDateTime(input, field, timeZone);
   if (isPastDate(input, timeZone)) {
     throw new InvalidDateError(`${field}: cannot be in the past. Choose today or a later date.`);
+  }
+  return d;
+}
+
+/**
+ * Parse a BACKDATABLE scheduling field: today, the future, or up to
+ * BACKDATE_WINDOW_DAYS into the past.
+ *
+ * The counterpart to requireFutureDateTime for leave and permission requests
+ * only. Anything older than the window is still rejected, so the audit trail
+ * cannot be rewritten months after the fact.
+ */
+export function requireRecentOrFutureDateTime(
+  input: string,
+  field = "date",
+  days: number = BACKDATE_WINDOW_DAYS,
+  timeZone: string = APP_TIMEZONE
+): Date {
+  const d = requireUserDateTime(input, field, timeZone);
+  const p = zonedParts(d, timeZone);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const day = `${p.year}-${pad(p.month)}-${pad(p.day)}`;
+  if (day < backdateFloor(days, timeZone)) {
+    throw new InvalidDateError(
+      `${field}: cannot be more than ${days} days in the past.`
+    );
   }
   return d;
 }

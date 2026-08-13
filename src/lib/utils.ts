@@ -1,6 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { APP_TIMEZONE, zonedParts, toZonedInputValue, companyToday, isPastDate } from "./timezone";
+import {
+  APP_TIMEZONE, zonedParts, toZonedInputValue, companyToday, isPastDate,
+  backdateFloor, BACKDATE_WINDOW_DAYS,
+} from "./timezone";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -158,6 +161,30 @@ export const todayInputMin = () => companyToday();
 
 /** Same boundary for <input type="datetime-local">: today at 00:00. */
 export const todayDateTimeMin = () => `${companyToday()}T00:00`;
+
+/**
+ * The `min` attribute for a BACKDATABLE date input — leave and permission
+ * requests, which people legitimately file after the fact.
+ *
+ * Same convenience-not-enforcement role as todayInputMin(): the server
+ * independently applies the identical window via requireRecentOrFutureDateTime().
+ */
+export const backdateInputMin = () => backdateFloor();
+
+/**
+ * react-hook-form validator for a backdatable date field.
+ *
+ * Mirrors the server's window exactly, so a value the form accepts is never
+ * rejected by the API and vice versa.
+ */
+export function withinBackdateWindow(label = "Date") {
+  return (value?: string | null) => {
+    if (!value) return true;
+    return value < backdateFloor()
+      ? `${label} cannot be more than ${BACKDATE_WINDOW_DAYS} days in the past.`
+      : true;
+  };
+}
 
 /**
  * react-hook-form validator for a future-facing date field.

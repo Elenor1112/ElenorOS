@@ -17,7 +17,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { REQUEST_STATUS_META, LEAVE_TYPE_META } from "@/lib/constants";
-import { formatDate, todayInputMin, notInThePast } from "@/lib/utils";
+import { formatDate, backdateInputMin, withinBackdateWindow } from "@/lib/utils";
 import { useSession } from "@/components/session-context";
 
 type Leave = {
@@ -172,8 +172,8 @@ function LeaveForm({ open, onClose }: { open: boolean; onClose: () => void }) {
             <Label>Start date</Label>
             <Input
               type="date"
-              min={todayInputMin()}
-              {...register("startDate", { required: true, validate: notInThePast("Start date") })}
+              min={backdateInputMin()}
+              {...register("startDate", { required: true, validate: withinBackdateWindow("Start date") })}
             />
             {errors.startDate?.message && (
               <p className="text-xs text-destructive">{String(errors.startDate.message)}</p>
@@ -183,8 +183,8 @@ function LeaveForm({ open, onClose }: { open: boolean; onClose: () => void }) {
             <Label>End date</Label>
             <Input
               type="date"
-              min={todayInputMin()}
-              {...register("endDate", { required: true, validate: notInThePast("End date") })}
+              min={backdateInputMin()}
+              {...register("endDate", { required: true, validate: withinBackdateWindow("End date") })}
             />
             {errors.endDate?.message && (
               <p className="text-xs text-destructive">{String(errors.endDate.message)}</p>

@@ -17,7 +17,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { REQUEST_STATUS_META } from "@/lib/constants";
-import { formatDate, todayInputMin, notInThePast } from "@/lib/utils";
+import { formatDate, backdateInputMin, withinBackdateWindow } from "@/lib/utils";
 import { useSession } from "@/components/session-context";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -129,8 +129,8 @@ export function PermissionsClient() {
               <Label>Date</Label>
               <Input
                 type="date"
-                min={todayInputMin()}
-                {...register("date", { required: true, validate: notInThePast("Date") })}
+                min={backdateInputMin()}
+                {...register("date", { required: true, validate: withinBackdateWindow("Date") })}
               />
               {errors.date?.message && (
                 <p className="text-xs text-destructive">{String(errors.date.message)}</p>
