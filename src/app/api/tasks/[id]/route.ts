@@ -6,8 +6,11 @@ import {
   logActivity, rollupSubtaskProgress, statusDefaultProgress, canViewTask,
   parseDeadline, formatDeadlineText, lifecycleStamps,
   workerAuthorization, isAssignableBy, recordWorkerChange, resolveTaskClientId,
+  recordFollowUpChange, canBeFollowUp,
 } from "@/lib/tasks";
-import { can, canChangeTaskStatus } from "@/lib/rbac";
+import {
+  can, canChangeTaskStatus, canManageFollowUp, isTaskCreatorEquivalent,
+} from "@/lib/rbac";
 import { assertDirectStatusChange, submissionInclude } from "@/lib/task-lifecycle";
 import { notifyMany } from "@/lib/notify";
 import type { TaskStatus } from "@prisma/client";
@@ -15,6 +18,13 @@ import type { TaskStatus } from "@prisma/client";
 const taskInclude = {
   assignees: { include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, jobTitle: true } } } },
   followers: { include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } } },
+  followUps: {
+    include: {
+      user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, jobTitle: true } },
+      addedBy: { select: { id: true, firstName: true, lastName: true } },
+    },
+    orderBy: { addedAt: "asc" as const },
+  },
   workers: {
     include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true, jobTitle: true } } },
     orderBy: { assignedAt: "asc" as const },
@@ -89,6 +99,9 @@ const updateSchema = z.object({
   // and null still means "clear". Normalized into `workerIds` below, which is
   // the only form the rest of this handler sees.
   workerId: z.string().optional().nullable(),
+  // The follow-up set — people carrying the creator's authority. Empty array
+  // clears it; undefined leaves it untouched, same convention as workerIds.
+  followUpIds: z.array(z.string()).optional(),
   labelIds: z.array(z.string()).optional(),
   // Still accepted so an older client sending it gets the explanatory 403 below
   // rather than a silent no-op; the approval flow owns this field.
@@ -103,7 +116,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const before = await db.task.findUnique({
       where: { id },
-      include: { assignees: true, workers: true },
+      include: { assignees: true, workers: true, followUps: true },
     });
     if (!before) throw new ApiError(404, "Task not found");
 
@@ -117,8 +130,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       "title", "description", "priority", "deadline",
       "estimatedHours", "projectId", "departmentId", "labelIds",
     ] as const;
+    // A follow-up holds the creator's authority on this ONE task, which is the
+    // whole point of the role — so they edit it on the same footing, without
+    // needing the agency-wide Task.EditDetails grant. Scoped to this task only:
+    // it never leaks into any other row, because it is derived from this task's
+    // own follow-up set.
+    const creatorEquivalent = isTaskCreatorEquivalent(user, before);
     const attempted = PRIVILEGED_FIELDS.filter((f) => data[f] !== undefined);
-    if (attempted.length && !can(user, "Task.EditDetails")) {
+    if (attempted.length && !can(user, "Task.EditDetails") && !creatorEquivalent) {
       throw new ApiError(
         403,
         `You can update status, progress and the checklist, but not: ${attempted.join(", ")}.`
@@ -134,7 +153,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data.assigneeIds !== undefined &&
       (data.assigneeIds.length !== before.assignees.length ||
         data.assigneeIds.some((uid) => !before.assignees.some((a) => a.userId === uid)));
-    if (changingAssignees && !can(user, "Task.EditAssignees")) {
+    // Creator-equivalence extends here for the same reason it extends to the
+    // privileged fields: a follow-up covering for the person who briefed the work
+    // must be able to move it to someone else when the assignee falls through.
+    // The per-candidate matrix check below still applies to whoever they pick,
+    // so this widens WHO may reassign, never WHOM they may reassign to.
+    if (changingAssignees && !can(user, "Task.EditAssignees") && !creatorEquivalent) {
       throw new ApiError(403, "You are not allowed to change who this task is assigned to.");
     }
 
@@ -215,6 +239,45 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         });
         if (!candidate) {
           throw new ApiError(403, "You can only assign a worker from your own team.");
+        }
+      }
+    }
+
+    // Follow-ups: who may change the set, and who may be put in it.
+    //
+    // Like workers, this is NOT a privileged field — an assignee with no
+    // Task.EditDetails must be able to nominate cover, which is the requirement
+    // the feature exists for — so it carries its own permission check instead.
+    const beforeFollowUpIds = before.followUps.map((f) => f.userId);
+    const requestedFollowUpIds =
+      data.followUpIds !== undefined ? [...new Set(data.followUpIds)] : undefined;
+    const addedFollowUps = requestedFollowUpIds?.filter((uid) => !beforeFollowUpIds.includes(uid)) ?? [];
+    const removedFollowUps = requestedFollowUpIds
+      ? beforeFollowUpIds.filter((uid) => !requestedFollowUpIds.includes(uid))
+      : [];
+    const changingFollowUps = addedFollowUps.length > 0 || removedFollowUps.length > 0;
+
+    if (changingFollowUps) {
+      if (!canManageFollowUp(user, before)) {
+        throw new ApiError(
+          403,
+          "Only the people accountable for this task can change its follow-ups."
+        );
+      }
+      // Only NEW nominations are validated, so removing somebody is never blocked
+      // by an existing entry that would no longer qualify — same rule as workers.
+      for (const uid of addedFollowUps) {
+        if (uid === before.createdById) {
+          throw new ApiError(
+            400,
+            "That person created this task and already has full authority over it."
+          );
+        }
+        if (!(await canBeFollowUp(uid))) {
+          throw new ApiError(
+            403,
+            "A follow-up must be an active employee who is allowed to approve tasks."
+          );
         }
       }
     }
@@ -352,6 +415,60 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
+    // Follow-up set, activity and notification. Reconciled the same way workers
+    // are, so an unchanged list neither churns rows nor notifies anybody.
+    if (changingFollowUps) {
+      await recordFollowUpChange({
+        taskId: id,
+        followUpIds: requestedFollowUpIds!,
+        actorId: user.id,
+        at: now,
+      });
+
+      const movedFollowUps = await db.user.findMany({
+        where: { id: { in: [...addedFollowUps, ...removedFollowUps] } },
+        select: { id: true, firstName: true, lastName: true },
+      });
+      const followUpName = (uid: string) => {
+        const u = movedFollowUps.find((m) => m.id === uid);
+        return u ? `${u.firstName} ${u.lastName}` : "someone";
+      };
+
+      if (addedFollowUps.length) {
+        await logActivity({
+          actorId: user.id,
+          taskId: id,
+          verb: "added follow-up",
+          meta: {
+            followUpIds: addedFollowUps,
+            followUpName: addedFollowUps.map(followUpName).join(", "),
+          },
+        });
+        // Being made a follow-up hands somebody authority over work they may not
+        // have been watching, so they are told even though nothing was assigned
+        // to them — otherwise the first they hear of it is an approval request.
+        await notifyMany(addedFollowUps.filter((uid) => uid !== user.id), {
+          type: "TASK_ASSIGNED",
+          title: "You've been added as a follow-up",
+          body: `${user.firstName} ${user.lastName} made you a follow-up on "${before.title}" (${before.code}). You have the same authority as the person who created it.`,
+          link: `/tasks?task=${id}`,
+          meta: { taskId: id, addedBy: `${user.firstName} ${user.lastName}`, role: "followUp" },
+        });
+      }
+
+      if (removedFollowUps.length) {
+        await logActivity({
+          actorId: user.id,
+          taskId: id,
+          verb: "removed follow-up",
+          meta: {
+            followUpIds: removedFollowUps,
+            followUpName: removedFollowUps.map(followUpName).join(", "),
+          },
+        });
+      }
+    }
+
     // reconcile assignees — only when the set actually differs, so resubmitting
     // an unchanged list doesn't churn the rows or log a phantom "reassigned".
     if (data.assigneeIds && changingAssignees) {
@@ -438,6 +555,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         status: before.status, progress: before.progress,
         assignedAt: before.assignedAt, startedAt: before.startedAt,
         workerIds: beforeWorkerIds,
+        // Granting somebody creator-level authority is a privilege change, so it
+        // belongs in the audit trail and not only in the activity feed.
+        followUpIds: beforeFollowUpIds,
       },
       newValue: {
         status: data.status ?? before.status,
@@ -445,6 +565,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         assignedAt: stamps.assignedAt ?? before.assignedAt,
         startedAt: stamps.startedAt ?? before.startedAt,
         workerIds: changingWorkers ? requestedWorkerIds! : beforeWorkerIds,
+        followUpIds: changingFollowUps ? requestedFollowUpIds! : beforeFollowUpIds,
       },
     });
 

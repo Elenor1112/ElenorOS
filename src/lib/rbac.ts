@@ -437,6 +437,13 @@ export function canAny(user: Pick<SessionUser, "isSuperAdmin" | "permissions">, 
 export type TaskOwnership = {
   assignees: { userId: string }[];
   workers?: { userId: string }[];
+  /**
+   * People holding the creator's authority by delegation — see
+   * `isTaskCreatorEquivalent`. Optional so every caller written before follow-ups
+   * existed keeps compiling and reads as "none", which is the correct answer for
+   * a task that has none.
+   */
+  followUps?: { userId: string }[];
   /** @deprecated superseded by `workers`; read only as a fallback. */
   workerId?: string | null;
 };
@@ -450,6 +457,62 @@ export type TaskOwnership = {
 export function taskWorkerIds(task: TaskOwnership): string[] {
   if (task.workers) return task.workers.map((w) => w.userId);
   return task.workerId ? [task.workerId] : [];
+}
+
+/** The ids of everyone holding delegated creator authority on a task. */
+export function taskFollowUpIds(task: TaskOwnership): string[] {
+  return task.followUps?.map((f) => f.userId) ?? [];
+}
+
+/**
+ * Whether this user holds the CREATOR's authority on this task.
+ *
+ * True for the creator themselves and for every follow-up, which is the whole
+ * point of the role: an assignee who needs somebody else to carry the briefing
+ * side of a task — because they are going on leave, or because the person who
+ * briefed it has moved on — nominates a follow-up, and that person can then do
+ * everything the creator could.
+ *
+ * THE single definition of "creator-level on this task". Every rule that used to
+ * compare against `createdById` asks this instead, so there is no way for one of
+ * them to be taught about follow-ups and another to be missed.
+ *
+ * Note this is an OWNERSHIP test, not a permission test: it says who stands in
+ * the creator's shoes, not what the creator may do. Callers still combine it
+ * with the relevant `can()` check where the underlying action needs one — being
+ * the creator of a task has never by itself granted Task.Delete, and being a
+ * follow-up must not either.
+ */
+export function isTaskCreatorEquivalent(
+  user: Pick<SessionUser, "id">,
+  task: { createdById: string } & TaskOwnership
+): boolean {
+  if (task.createdById === user.id) return true;
+  return taskFollowUpIds(task).includes(user.id);
+}
+
+/**
+ * Who may add or remove a task's follow-ups.
+ *
+ * The people accountable for the task: its assignees (the requirement is
+ * "as the assignee we need to add a Follow Up"), its creator, and anyone already
+ * holding the creator's authority — a follow-up can nominate another, exactly as
+ * the creator can, because the role is a full stand-in.
+ *
+ * Super admins are included so a delegation can be corrected when the people on
+ * the task are unavailable, matching the escape hatch in `isApproverFor`.
+ *
+ * WORKERS are deliberately excluded. Execution was delegated to them; the
+ * oversight side of the task was not, and letting a worker appoint their own
+ * reviewer would let them choose who signs off their work.
+ */
+export function canManageFollowUp(
+  user: Pick<SessionUser, "id" | "isSuperAdmin" | "permissions">,
+  task: { createdById: string } & TaskOwnership
+): boolean {
+  if (user.isSuperAdmin) return true;
+  if (isTaskCreatorEquivalent(user, task)) return true;
+  return task.assignees.some((a) => a.userId === user.id);
 }
 
 /**
@@ -539,21 +602,89 @@ export type ApprovableTask = TaskOwnership & {
  * Returns user ids in stage order. An EMPTY chain means nobody on the task can
  * approve it — see `canDecideApproval`, which falls back to Task.Approve holders
  * so such a task is reviewable rather than stranded.
+ *
+ * This flat form is the REPRESENTATIVE of each stage — one id per stage, so the
+ * historical `approvalStage` index still means what it always did. A stage may
+ * now hold more than one eligible approver (the creator and their follow-ups
+ * share one); use `approvalStages` when you need all of them.
  */
 export function approvalChain(
   task: ApprovableTask,
   submitterId: string | null | undefined
 ): string[] {
-  const chain: string[] = [];
+  return approvalStages(task, submitterId).map((stage) => stage[0]);
+}
+
+/**
+ * The approval chain as STAGES, each holding everyone who may decide it.
+ *
+ * Same order and same rules as `approvalChain` — which is derived from this —
+ * with one addition: the creator's stage also contains the task's follow-ups,
+ * because a follow-up stands in for the creator (see `isTaskCreatorEquivalent`).
+ *
+ * Follow-ups share that stage rather than getting one of their own. Nominating
+ * somebody to cover for you should give the review a second person who can
+ * unblock it, not make the work climb an extra step it did not have before —
+ * appointing help would otherwise slow the task down, which is the opposite of
+ * what the assignee wanted.
+ *
+ * Within a stage the members are equal and it takes ONE of them to advance it,
+ * exactly as multiple workers may each submit. The stage is ordered creator-first
+ * so `approvalChain`'s representative — and therefore every "waiting on X" label
+ * — still names the creator on a task that has one.
+ *
+ * The two chain-shaping rules are unchanged and apply across the whole result:
+ * the submitter never appears (nobody reviews their own work), and each person
+ * appears once, at their earliest position. A follow-up who is also an assignee
+ * is therefore an assignee-stage approver and is NOT repeated on the creator's
+ * stage — one person, one decision.
+ */
+export function approvalStages(
+  task: ApprovableTask,
+  submitterId: string | null | undefined
+): string[][] {
   const seen = new Set<string>();
   if (submitterId) seen.add(submitterId);
 
-  for (const id of [...task.assignees.map((a) => a.userId), task.createdById]) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    chain.push(id);
+  const take = (ids: string[]) => {
+    const stage: string[] = [];
+    for (const id of ids) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      stage.push(id);
+    }
+    return stage;
+  };
+
+  const stages: string[][] = [];
+  // Assignees are consumed one stage at a time, preserving the existing shape
+  // where each accountable person is their own step.
+  for (const a of task.assignees) {
+    const stage = take([a.userId]);
+    if (stage.length) stages.push(stage);
   }
-  return chain;
+  // The creator and their stand-ins form the last stage, as one group.
+  const briefing = take([task.createdById, ...taskFollowUpIds(task)]);
+  if (briefing.length) stages.push(briefing);
+
+  return stages;
+}
+
+/**
+ * Everyone who may decide the stage the task has currently reached.
+ *
+ * Empty when the chain is exhausted or empty — callers fall back to permission
+ * holders. `stage` is clamped the same way `currentApprover` clamps it, so a
+ * task whose people changed mid-review is never stranded past the end.
+ */
+export function currentApprovers(
+  task: ApprovableTask,
+  submitterId: string | null | undefined
+): string[] {
+  const stages = approvalStages(task, submitterId);
+  if (stages.length === 0) return [];
+  const stage = Math.max(0, task.approvalStage ?? 0);
+  return stages[stage] ?? stages[stages.length - 1] ?? [];
 }
 
 /**
@@ -563,15 +694,17 @@ export function approvalChain(
  * review was open can carry a stage past the end of its (re-derived) chain, and
  * returning null there would strand it. Callers treat null as "no named approver
  * — fall back to permission holders".
+ *
+ * Names ONE approver, for display and for the "it's your turn" notification. A
+ * stage shared by a creator and their follow-ups has several eligible deciders;
+ * this returns the creator-first representative, so use `currentApprovers` when
+ * the answer must cover all of them (authorization, notifying the whole group).
  */
 export function currentApprover(
   task: ApprovableTask,
   submitterId: string | null | undefined
 ): string | null {
-  const chain = approvalChain(task, submitterId);
-  if (chain.length === 0) return null;
-  const stage = Math.max(0, task.approvalStage ?? 0);
-  return chain[stage] ?? chain[chain.length - 1] ?? null;
+  return currentApprovers(task, submitterId)[0] ?? null;
 }
 
 /**
@@ -584,9 +717,9 @@ export function isFinalStage(
   task: ApprovableTask,
   submitterId: string | null | undefined
 ): boolean {
-  const chain = approvalChain(task, submitterId);
-  if (chain.length === 0) return true;
-  return (Math.max(0, task.approvalStage ?? 0)) >= chain.length - 1;
+  const stages = approvalStages(task, submitterId);
+  if (stages.length === 0) return true;
+  return (Math.max(0, task.approvalStage ?? 0)) >= stages.length - 1;
 }
 
 /**
@@ -637,13 +770,16 @@ export function isApproverFor(
   task: ApprovableTask,
   submitterId?: string | null
 ): boolean {
-  const chain = approvalChain(task, submitterId);
+  const approvers = currentApprovers(task, submitterId);
 
   // Nobody on the task can review it — fall back to the permission so the work
   // is not stranded with no possible approver.
-  if (chain.length === 0) return can(user, "Task.Approve");
+  if (approvers.length === 0) return can(user, "Task.Approve");
 
-  if (currentApprover(task, submitterId) === user.id) return true;
+  // Any member of the current stage may decide it. On the creator's stage that
+  // includes the follow-ups, which is what lets a nominated stand-in actually
+  // unblock the review rather than merely watch it.
+  if (approvers.includes(user.id)) return true;
 
   // The leave / absence escape hatch.
   return user.isSuperAdmin;
@@ -661,9 +797,12 @@ export function isChainOverride(
   task: ApprovableTask,
   submitterId?: string | null
 ): boolean {
-  const chain = approvalChain(task, submitterId);
-  if (chain.length === 0) return false;
-  return currentApprover(task, submitterId) !== user.id;
+  const approvers = currentApprovers(task, submitterId);
+  if (approvers.length === 0) return false;
+  // Membership of the stage, not identity with its representative: a follow-up
+  // deciding the creator's stage is taking their legitimate turn, so it must not
+  // be logged as somebody jumping the queue.
+  return !approvers.includes(user.id);
 }
 
 /**

@@ -8,6 +8,8 @@ import {
 } from "./timezone";
 // api.ts does not import this module, so there is no cycle.
 import { ApiError } from "./api";
+// auth.ts imports only db and rbac, so this direction is safe too.
+import { loadSessionUser } from "./auth";
 import type { Prisma, TaskStatus } from "@prisma/client";
 
 /**
@@ -15,8 +17,9 @@ import type { Prisma, TaskStatus } from "@prisma/client";
  *
  * Task.ViewAll (CEO, Operations Manager, Account Manager) sees everything.
  * Everyone else sees only tasks they are involved in — assigned to, following,
- * or that they created. Creator is included so a lead who assigns work out
- * (e.g. an Art Director briefing a designer) does not lose sight of it.
+ * standing in as a follow-up, or that they created. Creator is included so a lead
+ * who assigns work out (e.g. an Art Director briefing a designer) does not lose
+ * sight of it.
  *
  * Returns undefined when no filter is needed, so callers can spread it.
  */
@@ -27,6 +30,9 @@ export function taskVisibilityFilter(user: SessionUser): Prisma.TaskWhereInput |
     { assignees: { some: { userId: user.id } } },
     { followers: { some: { userId: user.id } } },
     { createdById: user.id },
+    // A follow-up stands in for the creator, so they see the task for the same
+    // reason the creator does — and must, since they may have to approve it.
+    { followUps: { some: { userId: user.id } } },
     // A delegated executor sees the task even though they are not an assignee
     // — this is what puts it on their dashboard and in "my tasks". Matches any
     // of the task's workers, so all of them see shared work.
@@ -376,6 +382,87 @@ export async function recordWorkerChange(opts: {
           assignedAt: at,
           unassignedAt: at,
         },
+      });
+    }
+  });
+
+  return { added, removed };
+}
+
+/**
+ * Whether `user` may nominate `candidate` as a follow-up on a task.
+ *
+ * A follow-up receives the creator's authority, which includes approving the
+ * work — so the candidate must be someone with a stake in it, not an arbitrary
+ * account. The bar is deliberately LOWER than `isAssignableBy`: that gate asks
+ * "may you hand this person work?", which is about seniority flowing downwards,
+ * whereas a stand-in for the briefing side is normally someone at or above the
+ * nominator's level. Requiring the assignment matrix here would stop an assignee
+ * naming their own manager, which is the commonest case the feature exists for.
+ *
+ * The rule is instead that the candidate must be ACTIVE and hold the permission
+ * to approve tasks, so nominating somebody can never manufacture an approver out
+ * of a person the agency never trusted to sign work off.
+ */
+export async function canBeFollowUp(candidateId: string): Promise<boolean> {
+  const candidate = await db.user.findUnique({
+    where: { id: candidateId },
+    select: { status: true },
+  });
+  if (!candidate || candidate.status !== "ACTIVE") return false;
+
+  // Resolved through the session loader rather than by re-reading the grant
+  // tables here: effective permissions are role defaults with per-user ALLOW/DENY
+  // overrides applied, and a second copy of that logic would eventually disagree
+  // with the first. Returns null for a deactivated account, already excluded.
+  const asSession = await loadSessionUser(candidateId);
+  if (!asSession) return false;
+  return can(asSession, "Task.Approve");
+}
+
+/**
+ * Reconcile a task's follow-up set, returning who actually moved.
+ *
+ * Mirrors `recordWorkerChange`: diffs against what is already there so a no-op
+ * save neither churns rows nor notifies anybody, and only real arrivals get an
+ * `addedById` stamp. There is no separate history table — a follow-up is a live
+ * authority rather than a billable span of work — so the activity log is the
+ * record of how the set changed.
+ */
+export async function recordFollowUpChange(opts: {
+  taskId: string;
+  followUpIds: string[];
+  actorId: string;
+  at?: Date;
+}): Promise<{ added: string[]; removed: string[] }> {
+  const at = opts.at ?? new Date();
+  const next = [...new Set(opts.followUpIds)];
+
+  const current = await db.taskFollowUp.findMany({
+    where: { taskId: opts.taskId },
+    select: { userId: true },
+  });
+  const currentIds = current.map((f) => f.userId);
+
+  const added = next.filter((id) => !currentIds.includes(id));
+  const removed = currentIds.filter((id) => !next.includes(id));
+  if (!added.length && !removed.length) return { added, removed };
+
+  await db.$transaction(async (tx) => {
+    if (removed.length) {
+      await tx.taskFollowUp.deleteMany({
+        where: { taskId: opts.taskId, userId: { in: removed } },
+      });
+    }
+    if (added.length) {
+      await tx.taskFollowUp.createMany({
+        data: added.map((userId) => ({
+          taskId: opts.taskId,
+          userId,
+          addedById: opts.actorId,
+          addedAt: at,
+        })),
+        skipDuplicates: true,
       });
     }
   });

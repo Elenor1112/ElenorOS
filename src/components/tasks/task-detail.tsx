@@ -23,7 +23,7 @@ import { TASK_STATUS_META, TASK_STATUS_ORDER, PRIORITY_META } from "@/lib/consta
 import { formatExactDateTime, fullName } from "@/lib/utils";
 import { DeadlinePicker, toDeadlineInput } from "@/components/ui/deadline-picker";
 import { useSession, useCan } from "@/components/session-context";
-import { canChangeTaskStatus } from "@/lib/rbac";
+import { canChangeTaskStatus, canManageFollowUp } from "@/lib/rbac";
 import { DIRECTLY_SETTABLE_STATUSES } from "@/lib/task-status";
 import type { TaskStatus } from "@prisma/client";
 
@@ -108,14 +108,36 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   // Candidate lists are server-scoped (own department for delegators, the
   // assignment matrix for assignees), so neither picker can offer someone the
   // API would reject.
+  // Follow-ups hold the creator's authority on this task — see
+  // isTaskCreatorEquivalent in lib/rbac.ts. Mirrored here so the row is editable
+  // for exactly the people the API would let through.
+  const followUps: any[] = React.useMemo(
+    () => (task?.followUps ?? []).map((f: any) => f.user),
+    [task]
+  );
+  const followUpIds: string[] = React.useMemo(() => followUps.map((f) => f.id), [followUps]);
+  const canSetFollowUp = task
+    ? canManageFollowUp(me, {
+        createdById: task.createdById,
+        assignees: (task.assignees ?? []).map((a: any) => ({ userId: a.user.id })),
+        followUps: followUpIds.map((userId) => ({ userId })),
+      })
+    : false;
+
   const { data: meta } = useQuery({
     queryKey: ["task-meta"],
-    queryFn: () => apiGet<{ workerCandidates: any[]; assignable: any[] }>("/api/tasks/meta"),
-    enabled: canSetWorker || canEditAssignees,
+    queryFn: () =>
+      apiGet<{
+        workerCandidates: any[];
+        assignable: any[];
+        followUpCandidates?: any[];
+      }>("/api/tasks/meta"),
+    enabled: canSetWorker || canEditAssignees || canSetFollowUp,
     staleTime: 5 * 60_000,
   });
   const workerCandidates = meta?.workerCandidates ?? [];
   const assignableUsers = meta?.assignable ?? [];
+  const followUpCandidates = meta?.followUpCandidates ?? [];
 
   const assigneeIds: string[] = React.useMemo(
     () => (task?.assignees ?? []).map((a: any) => a.user.id),
@@ -156,6 +178,26 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
 
   // Only people not already on the task can be added.
   const addableWorkers = workerCandidates.filter((u: any) => !workerIds.includes(u.id));
+
+  // Whether the follow-up picker is open. Like extra workers, a follow-up is the
+  // exception rather than the rule, so the control stays collapsed until asked for.
+  const [addingFollowUp, setAddingFollowUp] = React.useState(false);
+
+  function addFollowUp(userId: string) {
+    setAddingFollowUp(false);
+    if (!userId || followUpIds.includes(userId)) return;
+    patch.mutate({ followUpIds: [...followUpIds, userId] });
+  }
+
+  function removeFollowUp(userId: string) {
+    patch.mutate({ followUpIds: followUpIds.filter((id) => id !== userId) });
+  }
+
+  // The creator already holds this authority, so offering them would only produce
+  // the API's "already has full authority" 400.
+  const addableFollowUps = followUpCandidates.filter(
+    (u: any) => !followUpIds.includes(u.id) && u.id !== task?.createdById
+  );
 
   const [comment, setComment] = React.useState("");
   const addComment = useMutation({
@@ -422,6 +464,101 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
                     </p>
                   )}
                 </MetaRow>
+                {/* Follow-ups carry the CREATOR's authority on this task: they can
+                    edit it, manage its people, and approve it alongside whoever
+                    briefed it. Rendered next to Workers because both are things an
+                    assignee adds, but styled apart — this row grants authority,
+                    the one above delegates execution. */}
+                {(canSetFollowUp || followUps.length > 0) && (
+                  <MetaRow label={followUps.length > 1 ? "Follow Ups" : "Follow Up"} wide={canSetFollowUp}>
+                    {canSetFollowUp ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {followUps.map((f: any) => (
+                          <span
+                            key={f.id}
+                            title={
+                              f.jobTitle
+                                ? `${fullName(f)} · ${f.jobTitle} — same authority as the task's creator`
+                                : `${fullName(f)} — same authority as the task's creator`
+                            }
+                            className="flex items-center gap-1.5 rounded-full border border-warning bg-warning/10 py-1 pl-1 pr-1.5 text-xs text-warning"
+                          >
+                            <Avatar
+                              firstName={f.firstName}
+                              lastName={f.lastName}
+                              src={f.avatarUrl}
+                              size={20}
+                            />
+                            {fullName(f)}
+                            <button
+                              type="button"
+                              disabled={patch.isPending}
+                              onClick={() => removeFollowUp(f.id)}
+                              aria-label={`Remove ${fullName(f)} as a follow-up`}
+                              className="rounded-full p-0.5 hover:bg-warning/20 disabled:opacity-60"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </span>
+                        ))}
+
+                        {addingFollowUp ? (
+                          <Select
+                            autoFocus
+                            value=""
+                            disabled={patch.isPending}
+                            onChange={(e) => addFollowUp(e.target.value)}
+                            onBlur={() => setAddingFollowUp(false)}
+                            className="h-8 w-auto"
+                          >
+                            <option value="">Select a person…</option>
+                            {addableFollowUps.map((u: any) => (
+                              <option key={u.id} value={u.id}>
+                                {fullName(u)}{u.jobTitle ? ` · ${u.jobTitle}` : ""}
+                              </option>
+                            ))}
+                          </Select>
+                        ) : (
+                          addableFollowUps.length > 0 && (
+                            <button
+                              type="button"
+                              disabled={patch.isPending}
+                              onClick={() => setAddingFollowUp(true)}
+                              title="Give someone the same authority as this task's creator"
+                              className="flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-warning/50 hover:text-warning disabled:opacity-60"
+                            >
+                              <Plus className="size-3" />
+                              {followUps.length ? "Add" : "Add follow up"}
+                            </button>
+                          )
+                        )}
+
+                        {!followUps.length && !addableFollowUps.length && !addingFollowUp && (
+                          <span className="text-sm text-muted-foreground">None</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        {followUps.map((f: any) => (
+                          <span key={f.id} className="flex items-center gap-2 text-sm">
+                            <Avatar
+                              firstName={f.firstName}
+                              lastName={f.lastName}
+                              src={f.avatarUrl}
+                              size={24}
+                            />
+                            {fullName(f)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {canSetFollowUp && followUps.length > 0 && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Same authority as the person who created this task.
+                      </p>
+                    )}
+                  </MetaRow>
+                )}
                 {/* Lifecycle stamps are system-managed and read-only: assigned
                     on creation/first assignment, started on the first move into
                     In Progress. Neither is editable from here or via the API. */}

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireUser, toErrorResponse } from "@/lib/api";
-import { ASSIGNMENT_MATRIX, ASSIGNABLE_DEPARTMENTS, can } from "@/lib/rbac";
-import type { Prisma } from "@prisma/client";
+import {
+  ASSIGNMENT_MATRIX, ASSIGNABLE_DEPARTMENTS, ROLE_PERMISSIONS, can,
+} from "@/lib/rbac";
+import type { Prisma, RoleKey } from "@prisma/client";
 
 // Options needed to build task create/edit forms, scoped to the actor's role.
 export async function GET() {
@@ -67,8 +69,39 @@ export async function GET() {
         })
       : [];
 
+    // Who may be nominated as a FOLLOW-UP: anyone active who is allowed to
+    // approve tasks. Mirrors canBeFollowUp() in lib/tasks.ts, which is the gate
+    // the API actually applies.
+    //
+    // Deliberately NOT scoped by the assignment matrix. A follow-up stands in on
+    // the briefing side, so the usual case is nominating someone at or above your
+    // own level — filtering by "who may you hand work to" would hide exactly the
+    // people this list exists to offer.
+    //
+    // Role defaults are read from ROLE_PERMISSIONS (the same source the session
+    // resolver uses) and then corrected by per-user overrides, so a person
+    // individually granted or denied Task.Approve appears correctly either way.
+    const approverRoles = (Object.keys(ROLE_PERMISSIONS) as RoleKey[]).filter(
+      (key) => ROLE_PERMISSIONS[key].includes("Task.Approve")
+    );
+    const followUpCandidates = await db.user.findMany({
+      where: {
+        status: "ACTIVE",
+        OR: [
+          { role: { key: { in: approverRoles } } },
+          // Individually granted, whatever their role says.
+          { permissions: { some: { effect: "ALLOW", permission: { key: "Task.Approve" } } } },
+        ],
+        // …minus anyone whose grant was individually revoked.
+        NOT: { permissions: { some: { effect: "DENY", permission: { key: "Task.Approve" } } } },
+      },
+      select: personSelect,
+      orderBy: [{ role: { level: "asc" } }, { firstName: "asc" }],
+    });
+
     return NextResponse.json({
       projects, clients, labels, departments, assignable, workerCandidates,
+      followUpCandidates,
     });
   } catch (e) {
     return toErrorResponse(e);

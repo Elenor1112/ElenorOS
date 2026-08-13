@@ -145,6 +145,12 @@ model User {
   taskApprovalSteps TaskApprovalStep[]   @relation("TaskApprovalStepApprover")
   taskEvidenceFiles TaskSubmissionFile[] @relation("TaskSubmissionFileUploader")
   taskFollows       TaskFollower[]
+  /// Tasks this user is a follow-up on — a delegated stand-in for the creator.
+  /// Distinct from `taskFollows`, which is a passive watch with no authority.
+  taskFollowUps     TaskFollowUp[]      @relation("TaskFollowUpUser")
+  /// Follow-up nominations this user made, kept so "who put them there?" is
+  /// answerable without reading the activity log.
+  taskFollowUpsAdded TaskFollowUp[]     @relation("TaskFollowUpAddedBy")
   comments          Comment[]
   activities        Activity[]
   projectsLed       Project[]           @relation("ProjectLead")
@@ -412,6 +418,19 @@ model Task {
 
   assignees   TaskAssignee[]
   followers   TaskFollower[]
+
+  /// People an assignee has pulled in to carry the CREATOR's authority on this
+  /// task, as a delegated stand-in for whoever briefed it.
+  ///
+  /// Deliberately NOT `followers`: a follower is a passive watcher with read
+  /// access and nothing else, whereas a follow-up may edit the task, manage its
+  /// people, and sign it off — see `isTaskCreatorEquivalent` in lib/rbac.ts,
+  /// which is the single definition of "creator-level on this task".
+  ///
+  /// They share the creator's approval STAGE rather than adding one of their
+  /// own, so nominating a follow-up gives the review a second person who can
+  /// unblock it — it does not make the work climb a longer chain.
+  followUps   TaskFollowUp[]
   labels      TaskLabel[]
   comments    Comment[]       @relation("TaskComments")
   activities  Activity[]      @relation("TaskActivities")
@@ -707,6 +726,33 @@ model TaskFollower {
   userId String
 
   @@id([taskId, userId])
+}
+
+/// A person granted the CREATOR's authority on one task — see `Task.followUps`.
+///
+/// Membership carries no rank: every follow-up on a task holds the same rights
+/// as every other and as the creator, so there is no "primary" follow-up, the
+/// same way there is no primary worker.
+model TaskFollowUp {
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+  user   User   @relation("TaskFollowUpUser", fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  /// Who nominated them, and when. An assignee handing their oversight to
+  /// somebody else is a delegation of authority, so it is attributable — kept
+  /// on the row rather than only in the activity log so the drawer can show it
+  /// without a join, and so it survives activity-log trimming.
+  ///
+  /// SetNull rather than Cascade: deleting the nominator must not silently strip
+  /// a live authority off the task.
+  addedById String?
+  addedBy   User?    @relation("TaskFollowUpAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+  addedAt   DateTime @default(now()) @db.Timestamptz
+
+  @@id([taskId, userId])
+  // "What am I a follow-up on?" — the reverse lookup, matching TaskWorker.
+  @@index([userId])
 }
 
 model Label {

@@ -34,6 +34,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         approvalStage: true,
         workers: { select: { userId: true } },
         assignees: { select: { userId: true } },
+        // Required for the chain to recognise a follow-up as an approver at the
+        // creator's stage — omitting it would 403 the very people the role adds.
+        followUps: { select: { userId: true } },
       },
     });
     if (!task) throw new ApiError(404, "Task not found");

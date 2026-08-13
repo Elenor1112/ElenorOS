@@ -31,27 +31,5 @@
       "Bash(sed -i 's|  canChangeTaskStatus,\\\\n} from \"@/lib/tasks\";||' \"src/app/api/tasks/[id]/route.ts\")",
       "Bash(python -c ' *)"
     ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "C:/Users/Fahd/.local/bin/graphify.EXE hook-guard search"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Glob",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "C:/Users/Fahd/.local/bin/graphify.EXE hook-guard read --strict"
-          }
-        ]
-      }
-    ]
   }
 }

@@ -5,7 +5,8 @@ import { logActivity } from "./tasks";
 import { notifyMany } from "./notify";
 import {
   canSubmitForApproval, isApproverFor, wouldSelfApprove, taskWorkerIds,
-  approvalChain, currentApprover, isFinalStage, isChainOverride,
+  approvalChain, currentApprovers, isFinalStage, isChainOverride,
+  taskFollowUpIds,
   type ApprovableTask, type SessionUser,
 } from "./rbac";
 import {
@@ -423,10 +424,13 @@ export async function approveTask(opts: {
   // their work cleared a stage — otherwise a task sitting at stage 1 looks
   // identical to one nobody has looked at.
   const nextTask = { ...task, approvalStage: stage + 1 };
-  const next = currentApprover(nextTask, active.submittedById);
+  // Everyone who may decide the next stage, so a creator's follow-ups are told
+  // it has reached them rather than only the creator.
+  const nextApprovers = currentApprovers(nextTask, active.submittedById)
+    .filter((id) => id !== user.id);
 
-  if (next && next !== user.id) {
-    await notifyMany([next], {
+  if (nextApprovers.length) {
+    await notifyMany(nextApprovers, {
       type: "APPROVAL_REQUIRED",
       title: "Approval needed",
       body: `${user.firstName} ${user.lastName} approved "${task.title}" (${task.code}) — it now needs your approval.`,
@@ -436,7 +440,7 @@ export async function approveTask(opts: {
   }
 
   await notifyMany(
-    [active.submittedById].filter((id) => id !== user.id && id !== next),
+    [active.submittedById].filter((id) => id !== user.id && !nextApprovers.includes(id)),
     {
       type: "TASK_APPROVED",
       title: "Approval step cleared",
@@ -594,10 +598,17 @@ async function approverIdsFor(
   actorId: string,
   submitterId: string
 ): Promise<string[]> {
-  const next = currentApprover(task, submitterId);
-  if (next) return next === actorId ? [] : [next];
+  // The whole stage, not just its representative: a creator's stage shared with
+  // follow-ups has several people who can act, and notifying only the creator
+  // would leave the stand-in — often the one actually covering — unaware.
+  const next = currentApprovers(task, submitterId).filter((id) => id !== actorId);
+  if (next.length) return next;
 
-  const ids = new Set<string>([task.createdById, ...task.assignees.map((a) => a.userId)]);
+  const ids = new Set<string>([
+    task.createdById,
+    ...taskFollowUpIds(task),
+    ...task.assignees.map((a) => a.userId),
+  ]);
   ids.delete(actorId);
   return [...ids];
 }
@@ -614,6 +625,9 @@ function submitterAndOwners(task: ApprovableTask, submitterId: string, actorId: 
     submitterId,
     ...task.assignees.map((a) => a.userId),
     ...taskWorkerIds(task),
+    // Follow-ups stand in for the creator, so a decision on the work is theirs
+    // to hear — especially a rejection they may have to chase.
+    ...taskFollowUpIds(task),
   ]);
   ids.delete(actorId);
   return [...ids];

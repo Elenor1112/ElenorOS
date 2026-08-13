@@ -14,7 +14,7 @@ import { formatExactDateTime, fullName } from "@/lib/utils";
 import { useSession } from "@/components/session-context";
 import {
   canSubmitForApproval, canDecideApproval, isApproverFor, wouldSelfApprove,
-  approvalChain, currentApprover, isFinalStage, isChainOverride,
+  approvalStages, currentApprover, isFinalStage, isChainOverride,
 } from "@/lib/rbac";
 import type { SessionUser } from "@/lib/rbac";
 
@@ -30,6 +30,19 @@ import type { SessionUser } from "@/lib/rbac";
 
 type EvidenceFile = { id: string; name: string; mimeType: string; size: number };
 
+/**
+ * How one approval STAGE reads: "Ana Costa", or "Ana Costa or Miguel Reyes".
+ *
+ * A stage shared by a creator and their follow-ups needs ONE of them to act, so
+ * the names are joined with "or" — a comma-separated list would read as a queue
+ * that has to be worked through.
+ */
+function stageLabelFor(ids: string[] | undefined, nameOf: (id: string) => string): string {
+  const names = (ids ?? []).map(nameOf);
+  if (names.length <= 1) return names[0] ?? "another approver";
+  return `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}`;
+}
+
 export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
   const me = useSession() as SessionUser;
   const qc = useQueryClient();
@@ -40,6 +53,10 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
     approvalStage: task.approvalStage ?? 0,
     assignees: (task.assignees ?? []).map((a: any) => ({ userId: a.user?.id ?? a.userId })),
     workers: (task.workers ?? []).map((w: any) => ({ userId: w.user?.id ?? w.userId })),
+    // Follow-ups share the creator's approval stage, so they must be in the shape
+    // the chain is derived from — otherwise this panel would hide the decision
+    // controls from someone the API would happily let approve.
+    followUps: (task.followUps ?? []).map((f: any) => ({ userId: f.user?.id ?? f.userId })),
   };
 
   const submissions: any[] = task.submissions ?? [];
@@ -60,7 +77,9 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
   // the person whose turn it is — "waiting on the Art Director" is the answer to
   // the question the Account Manager opens this panel to ask.
   const submitterId = openSubmission?.submittedById ?? null;
-  const chain = approvalChain(shape, submitterId);
+  // Stages rather than a flat list: the creator's stage may hold their follow-ups
+  // too, and the panel should show every person who can move the review along.
+  const chain = approvalStages(shape, submitterId);
   const multiStage = chain.length > 1;
   const pendingApproverId = underReview ? currentApprover(shape, submitterId) : null;
   const finalStage = isFinalStage(shape, submitterId);
@@ -71,6 +90,7 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
   const people = new Map<string, any>();
   for (const a of task.assignees ?? []) if (a.user) people.set(a.user.id, a.user);
   for (const w of task.workers ?? []) if (w.user) people.set(w.user.id, w.user);
+  for (const f of task.followUps ?? []) if (f.user) people.set(f.user.id, f.user);
   if (task.createdBy) people.set(task.createdBy.id, task.createdBy);
   const nameOf = (id: string) => {
     const u = people.get(id);
@@ -119,7 +139,9 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
           taskId={taskId}
           onDone={invalidate}
           finalStage={finalStage}
-          nextApprover={finalStage ? null : nameOf(chain[shape.approvalStage + 1] ?? "")}
+          nextApprover={
+            finalStage ? null : stageLabelFor(chain[shape.approvalStage + 1], nameOf)
+          }
           overriding={overriding}
           overriddenName={overriding && pendingApproverId ? nameOf(pendingApproverId) : null}
         />
@@ -173,7 +195,8 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
 function ChainProgress({
   chain, stage, approvals, nameOf,
 }: {
-  chain: string[];
+  /** One entry per stage; a stage with several eligible approvers lists them all. */
+  chain: string[][];
   stage: number;
   approvals: any[];
   nameOf: (id: string) => string;
@@ -186,12 +209,12 @@ function ChainProgress({
         Approval chain
       </p>
       <ol className="space-y-1.5">
-        {chain.map((id, i) => {
+        {chain.map((ids, i) => {
           const done = i < stage;
           const current = i === stage;
           const step = byStage.get(i);
           return (
-            <li key={id} className="flex items-center gap-2 text-sm">
+            <li key={ids.join("+")} className="flex items-center gap-2 text-sm">
               <span
                 className={`flex size-4 shrink-0 items-center justify-center rounded-full border text-[9px] ${
                   done
@@ -203,7 +226,11 @@ function ChainProgress({
               >
                 {done ? "✓" : i + 1}
               </span>
-              <span className={done ? "text-muted-foreground line-through" : ""}>{nameOf(id)}</span>
+              {/* A cleared stage names whoever actually signed it — on a shared
+                  stage "Ana or Miguel" would leave it unclear which of them did. */}
+              <span className={done ? "text-muted-foreground line-through" : ""}>
+                {done && step?.approvedBy ? fullName(step.approvedBy) : stageLabelFor(ids, nameOf)}
+              </span>
               {current && (
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                   Waiting

@@ -33,6 +33,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         id: true, code: true, title: true, status: true, createdById: true,
         assignees: { select: { userId: true } },
         workers: { select: { userId: true } },
+        // Part of the approval chain, so it must be loaded for the submission to
+        // notify the right people — see approvalStages() in lib/rbac.ts.
+        followUps: { select: { userId: true } },
       },
     });
     if (!task) throw new ApiError(404, "Task not found");
