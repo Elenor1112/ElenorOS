@@ -487,6 +487,31 @@ function SubmitForm({
   // Mirrors the server's rule so the user is told before a round trip.
   const hasEvidence = Boolean(notes.trim() || url.trim() || files.length);
 
+  /**
+   * Ctrl+V anywhere in the form: if the clipboard holds a file (a screenshot
+   * from Win+Shift+S, an image copied from another app, or a file copied in
+   * Explorer where the browser exposes it), attach it through the SAME upload
+   * mutation the file-picker uses — no separate upload path to keep in sync.
+   *
+   * Deliberately does nothing when the clipboard has no file item, so an
+   * ordinary text paste into Notes or the link field is untouched — the browser
+   * handles that natively, which is why `preventDefault` is scoped inside the
+   * file branch rather than called unconditionally.
+   */
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const pastedFiles: File[] = [];
+    for (const item of items) {
+      if (item.kind !== "file") continue;
+      const file = item.getAsFile();
+      if (file) pastedFiles.push(file);
+    }
+    if (!pastedFiles.length) return;
+    e.preventDefault();
+    for (const file of pastedFiles) upload.mutate(file);
+  };
+
   if (!open) {
     return (
       <Button size="sm" className="mt-2" onClick={() => setOpen(true)}>
@@ -497,9 +522,13 @@ function SubmitForm({
   }
 
   return (
-    <div className="mt-2 space-y-2 rounded-xl border border-border bg-background p-3">
+    <div
+      className="mt-2 space-y-2 rounded-xl border border-border bg-background p-3"
+      onPaste={handlePaste}
+    >
       <p className="text-xs text-muted-foreground">
         Attach proof of completion — a file, a link, or a note. At least one is required.
+        {" "}Or paste an image with <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-medium">Ctrl+V</kbd>.
       </p>
 
       <Textarea

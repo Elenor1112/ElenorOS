@@ -120,3 +120,19 @@ Employee → Direct Manager → Operations Manager → (CEO, resignations only)
   with the reason and who rejected it.
 - Each approval advances to and notifies the next approver.
 - If no approvers resolve (e.g. the CEO submits), the request auto-approves.
+
+## Task Approval Chain
+
+Tasks use a separate, sequential chain derived from the task's own people —
+`approvalStages()` in [`src/lib/rbac.ts`](../src/lib/rbac.ts) — rather than the
+routing above: `workers → assignees → creator (+ follow-ups)`, submitter excluded,
+each person appearing once at their earliest stage. Enforced server-side in
+[`src/lib/task-lifecycle.ts`](../src/lib/task-lifecycle.ts) (`submitForApproval` /
+`approveTask` / `rejectTask`), which is the only place a task can reach `DONE`.
+
+Design Team tasks additionally guarantee an Account Manager stage: on submission,
+`submitForApproval` adds the task's `Client.accountManagerId` as a `TaskFollowUp`
+(if not already on the chain), which gives them creator-level approval authority —
+see `isTaskCreatorEquivalent`. This makes the flow
+`Designer → Art Director → Account Manager → Done` hold even when the Art Director,
+not the Account Manager, created and assigned the task.

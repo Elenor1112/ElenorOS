@@ -137,7 +137,14 @@ async function main() {
   ];
   const clientIds: string[] = [];
   for (const c of clientData) {
-    const client = await db.client.create({ data: c });
+    // Every seeded client is briefed by the same Account Manager, matching the
+    // projects below (all led by account@elenor.com) — this is also what makes
+    // the Design Team task approval chain (Art Director -> Account Manager)
+    // actually reach an Account Manager: submitForApproval derives that seat
+    // from Client.accountManagerId, see lib/task-lifecycle.ts.
+    const client = await db.client.create({
+      data: { ...c, accountManagerId: userIds["account@elenor.com"] },
+    });
     clientIds.push(client.id);
   }
 

@@ -1,12 +1,12 @@
 import "server-only";
 import { db } from "./db";
 import { ApiError } from "./api";
-import { logActivity } from "./tasks";
+import { logActivity, recordFollowUpChange, canBeFollowUp } from "./tasks";
 import { notifyMany } from "./notify";
 import {
   canSubmitForApproval, isApproverFor, wouldSelfApprove, taskWorkerIds,
   approvalChain, currentApprovers, isFinalStage, isChainOverride,
-  taskFollowUpIds,
+  taskFollowUpIds, isTaskCreatorEquivalent, DESIGN_APPROVAL_DEPARTMENT,
   type ApprovableTask, type SessionUser,
 } from "./rbac";
 import {
@@ -114,8 +114,18 @@ export function normalizeEvidence(input: EvidenceInput): NormalizedEvidence {
 /**
  * The task shape the guards need. Wider than ApprovableTask because the DB-side
  * rules also consult the open submission.
+ *
+ * `department`/`client` are optional (rather than required) so callers that
+ * decide or reject — where the chain is already fixed and neither field is
+ * consulted — do not have to fetch them just to satisfy the type.
  */
-export type LifecycleTask = ApprovableTask & { id: string; title: string; code: string };
+export type LifecycleTask = ApprovableTask & {
+  id: string;
+  title: string;
+  code: string;
+  department?: { name: string } | null;
+  client?: { accountManagerId: string | null } | null;
+};
 
 /**
  * Assert that a plain status PATCH is allowed to write `next`.
@@ -221,6 +231,59 @@ export async function submitForApproval(opts: {
     throw new ApiError(400, `A task with status ${task.status} cannot be submitted for approval.`);
   }
 
+  // Design Team work is briefed by an Account Manager who is rarely the task's
+  // creator or an assignee (an Art Director typically creates and assigns the
+  // work), so the chain `approvalStages` derives from those alone would often
+  // stop at the Art Director and never reach them. Guaranteeing a seat is done
+  // here, at submission time, by adding the client's Account Manager as a
+  // follow-up — follow-ups already carry full creator-level approval authority
+  // (see isTaskCreatorEquivalent), so this reuses that mechanism rather than
+  // introducing a parallel chain concept, and it is recomputed on every
+  // (re)submission so a client's Account Manager change is picked up rather than
+  // going stale.
+  //
+  // Skipped when the Account Manager already has a seat on the chain (assignee,
+  // creator, or already a follow-up) — approvalStages' own dedup would collapse
+  // a duplicate anyway, but skipping avoids a no-op write and a phantom activity
+  // entry on every resubmission. Also skipped when the client's account manager
+  // is not (or no longer) a valid follow-up candidate — an inactive account or
+  // one that has lost Task.Approve must not be forced onto a chain it cannot
+  // clear; such a task falls back to Task.Approve holders same as any other
+  // chain gap (see isApproverFor), rather than being silently stranded.
+  const accountManagerId = task.client?.accountManagerId ?? null;
+  let followUps = task.followUps ?? [];
+  if (
+    task.department?.name === DESIGN_APPROVAL_DEPARTMENT &&
+    accountManagerId &&
+    accountManagerId !== user.id &&
+    !task.assignees.some((a) => a.userId === accountManagerId) &&
+    !isTaskCreatorEquivalent({ id: accountManagerId }, task) &&
+    (await canBeFollowUp(accountManagerId))
+  ) {
+    const nextFollowUpIds = [...new Set([...taskFollowUpIds(task), accountManagerId])];
+    const { added } = await recordFollowUpChange({
+      taskId: task.id,
+      followUpIds: nextFollowUpIds,
+      actorId: user.id,
+      at: new Date(),
+    });
+    if (added.length) {
+      followUps = [...followUps, ...added.map((userId) => ({ userId }))];
+      await logActivity({
+        actorId: user.id,
+        taskId: task.id,
+        verb: "added follow-up",
+        meta: {
+          followUpIds: added,
+          reason: "design-approval-account-manager",
+        },
+      });
+    }
+  }
+  // Every subsequent chain computation in this function must see the follow-up
+  // that was just added, not the pre-submit snapshot the route loaded.
+  const chainTask: LifecycleTask = { ...task, followUps };
+
   const evidence = normalizeEvidence(opts.evidence);
 
   // Files are uploaded before the submission exists (the user picks them in the
@@ -302,8 +365,9 @@ export async function submitForApproval(opts: {
   });
 
   // Stage 0 explicitly: `task` is the pre-submit row, whose approvalStage may
-  // still carry a value from an earlier review.
-  await notifyMany(await approverIdsFor({ ...task, approvalStage: 0 }, user.id, user.id), {
+  // still carry a value from an earlier review. chainTask (not task) so a
+  // newly-added Account Manager follow-up is reflected in who gets notified.
+  await notifyMany(await approverIdsFor({ ...chainTask, approvalStage: 0 }, user.id, user.id), {
     type: "APPROVAL_REQUIRED",
     title: "Approval needed",
     body: `${user.firstName} ${user.lastName} submitted "${task.title}" (${task.code}) for your approval.`,

@@ -22,6 +22,9 @@ appropriate status (400 validation, 401 auth, 403 permission, 404 not found,
 | GET | `/api/tasks/:id` | Task.View | Full detail (subtasks, comments, activity, checklist, deps) |
 | PATCH | `/api/tasks/:id` | authed | Status/progress workflow, assignees, labels |
 | DELETE | `/api/tasks/:id` | Task.Delete | |
+| POST | `/api/tasks/:id/submit` | assignee/worker | `EDITING → WAITING_APPROVAL`; requires evidence. On a Design Team task, also adds the client's Account Manager as a follow-up — see RBAC.md § Task Approval Chain |
+| POST | `/api/tasks/:id/approval` | current approver | `{ decision: approve\|reject, comment? }` — the only route that can write `DONE`; sequential, self-approval blocked, races 409 |
+| GET/POST | `/api/tasks/:id/submission-files` | assignee/worker | Evidence uploads (file picker, drag-drop, or paste) |
 | POST | `/api/tasks/:id/comments` | authed | Notifies assignees/creator/mentions |
 | POST/PATCH/DELETE | `/api/tasks/:id/checklist` | authed | Manage checklist items |
 | GET | `/api/tasks/meta` | authed | Projects/clients/labels/depts + role-scoped assignables |
@@ -52,7 +55,7 @@ appropriate status (400 validation, 401 auth, 403 permission, 404 not found,
 | PATCH | `/api/permissions-requests/:id` | approve/reject/cancel |
 | GET / POST | `/api/resignations` | Creates offboarding checklist |
 | PATCH | `/api/resignations/:id` | approve/reject / toggle checklist item |
-| GET | `/api/approvals` | Everything awaiting the caller's decision |
+| GET | `/api/approvals` | Everything awaiting the caller's decision — leave, permissions, resignations, and tasks currently at *this user's* stage of their approval chain (not merely `WAITING_APPROVAL`) |
 
 ## EOTM / Analytics
 | Method | Path | Permission |

@@ -401,6 +401,17 @@ export const ASSIGNABLE_DEPARTMENTS: Partial<Record<RoleKey, string[]>> = {
   ART_DIRECTOR: ["Design Team"],
 };
 
+/**
+ * The department whose task approvals require Account Manager sign-off after the
+ * Art Director, on top of whatever chain `approvalStages` would otherwise derive.
+ *
+ * Matched by name, same convention as `ASSIGNABLE_DEPARTMENTS` — see the note
+ * there on why. Consumed by `submitForApproval` in lib/task-lifecycle.ts, which is
+ * the single enforcement point: see that module for how the Account Manager is
+ * guaranteed a seat on the chain.
+ */
+export const DESIGN_APPROVAL_DEPARTMENT = "Design Team";
+
 // ─── Runtime helpers ─────────────────────────────────────────
 
 export type SessionUser = {

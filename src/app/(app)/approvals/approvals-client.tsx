@@ -3,7 +3,7 @@ import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { CheckCheck, Plane, Clock, LogOut, Check, X, Inbox } from "lucide-react";
+import { CheckCheck, Plane, Clock, LogOut, Check, X, Inbox, ClipboardCheck } from "lucide-react";
 import { apiGet, apiSend } from "@/lib/fetcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type ApprovalsData = {
   leaves: any[];
   permissions: any[];
   resignations: any[];
+  tasks: any[];
   total: number;
 };
 
@@ -43,6 +44,28 @@ export function ApprovalsClient() {
   function approve(url: string) { act.mutate({ url, body: { action: "approve" } }); }
   function reject(url: string) { const c = prompt("Rejection reason?"); if (c !== null) act.mutate({ url, body: { action: "reject", comment: c } }); }
 
+  // Tasks go through the dedicated approval endpoint, whose contract is
+  // {decision: "approve" | "reject"} rather than the {action} shape the requests
+  // above use — see /api/tasks/[id]/approval, the only route allowed to write
+  // DONE on a task.
+  const decideTask = useMutation({
+    mutationFn: (v: { taskId: string; body: { decision: "approve" | "reject"; comment?: string } }) =>
+      apiSend(`/api/tasks/${v.taskId}/approval`, "POST", v.body),
+    onSuccess: () => {
+      toast.success("Decision recorded");
+      qc.invalidateQueries({ queryKey: ["approvals"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function approveTask(taskId: string) { decideTask.mutate({ taskId, body: { decision: "approve" } }); }
+  function rejectTask(taskId: string) {
+    const c = prompt("What needs changing? This is required.");
+    if (c !== null && c.trim()) decideTask.mutate({ taskId, body: { decision: "reject", comment: c } });
+  }
+
   if (isLoading) return <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;
 
   if (!data || data.total === 0) {
@@ -57,6 +80,22 @@ export function ApprovalsClient() {
 
   return (
     <div className="space-y-6">
+      {data.tasks.length > 0 && (
+        <Group icon={ClipboardCheck} title="Task approvals" count={data.tasks.length}>
+          {data.tasks.map((t, i) => (
+            <Row key={t.id} i={i} person={t.submittedBy}
+              title={<>
+                <Badge color="#8B5CF6">{t.code}</Badge>
+                <span className="text-sm text-muted-foreground">{t.title}</span>
+              </>}
+              detail={t.submittedAt ? `Submitted ${formatDate(t.submittedAt)}` : "Submitted for approval"}
+              onApprove={() => approveTask(t.id)}
+              onReject={() => rejectTask(t.id)}
+            />
+          ))}
+        </Group>
+      )}
+
       {data.leaves.length > 0 && (
         <Group icon={Plane} title="Leave requests" count={data.leaves.length}>
           {data.leaves.map((r, i) => (
