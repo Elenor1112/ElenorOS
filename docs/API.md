@@ -22,7 +22,7 @@ appropriate status (400 validation, 401 auth, 403 permission, 404 not found,
 | GET | `/api/tasks/:id` | Task.View | Full detail (subtasks, comments, activity, checklist, deps) |
 | PATCH | `/api/tasks/:id` | authed | Status/progress workflow, assignees, labels |
 | DELETE | `/api/tasks/:id` | Task.Delete | |
-| POST | `/api/tasks/:id/submit` | assignee/worker | `EDITING → WAITING_APPROVAL`; requires evidence. On a Design Team task, also adds the client's Account Manager as a follow-up — see RBAC.md § Task Approval Chain |
+| POST | `/api/tasks/:id/submit` | assignee/worker | `EDITING → WAITING_APPROVAL`; requires evidence. May also add an Account Manager as a follow-up (Design Team tasks, or when the submitter reports directly to one) — see RBAC.md § Task Approval Chain |
 | POST | `/api/tasks/:id/approval` | current approver | `{ decision: approve\|reject, comment? }` — the only route that can write `DONE`; sequential, self-approval blocked, races 409 |
 | GET/POST | `/api/tasks/:id/submission-files` | assignee/worker | Evidence uploads (file picker, drag-drop, or paste) |
 | POST | `/api/tasks/:id/comments` | authed | Notifies assignees/creator/mentions |

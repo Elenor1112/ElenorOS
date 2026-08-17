@@ -1150,8 +1150,8 @@
     "semantic_hash": "d29bc5df53e4f001f2d753c41dda7ed6"
   },
   "src/lib/task-lifecycle.ts": {
-    "mtime": 1786964950.959532,
-    "ast_hash": "7dd1f2f95adbf11fab4b11c3e85b60f1",
+    "mtime": 1786966678.036709,
+    "ast_hash": "558e6e3bb0ef00617090af7d2f8c9299",
     "semantic_hash": ""
   },
   "src/lib/task-status.ts": {
@@ -1270,8 +1270,8 @@
     "semantic_hash": "974dc92bcc6d9ac0333fbe8106487382"
   },
   "docs/API.md": {
-    "mtime": 1786965724.927621,
-    "ast_hash": "3076c09f4a5c51134bc76b07b549f9a1",
+    "mtime": 1786966797.270034,
+    "ast_hash": "ae2081bfaef986846ed7d4755b8d8451",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
@@ -1290,8 +1290,8 @@
     "semantic_hash": "9351d7ab9468738cae6747eedcf018a4"
   },
   "docs/RBAC.md": {
-    "mtime": 1786965707.2229605,
-    "ast_hash": "ff3797d6fd262bdd19f2d16ac5c7689e",
+    "mtime": 1786966790.408733,
+    "ast_hash": "34c41b498d9e23a6762ce360b2d52ec6",
     "semantic_hash": ""
   },
   "public/icons/badge-72.png": {

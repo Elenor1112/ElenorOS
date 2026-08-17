@@ -130,9 +130,19 @@ each person appearing once at their earliest stage. Enforced server-side in
 [`src/lib/task-lifecycle.ts`](../src/lib/task-lifecycle.ts) (`submitForApproval` /
 `approveTask` / `rejectTask`), which is the only place a task can reach `DONE`.
 
-Design Team tasks additionally guarantee an Account Manager stage: on submission,
-`submitForApproval` adds the task's `Client.accountManagerId` as a `TaskFollowUp`
-(if not already on the chain), which gives them creator-level approval authority —
-see `isTaskCreatorEquivalent`. This makes the flow
-`Designer → Art Director → Account Manager → Done` hold even when the Art Director,
-not the Account Manager, created and assigned the task.
+Some tasks additionally guarantee an Account Manager stage: on submission,
+`submitForApproval` adds the relevant Account Manager as a `TaskFollowUp` (if not
+already on the chain), which gives them creator-level approval authority — see
+`isTaskCreatorEquivalent`. Two independent triggers add this seat (either is
+sufficient, and both are checked on every submission):
+
+1. **Design Team tasks** — the task's `Client.accountManagerId`, i.e. whoever
+   briefs that client's work.
+2. **Direct reports of an Account Manager** — whenever the *submitter's own*
+   `User.managerId` points at a user whose role is `ACCOUNT_MANAGER`, that manager
+   is added, whatever department the task is in. This generalizes the guarantee
+   beyond Design Team: anyone who reports directly to an Account Manager gets
+   that manager as their task's final approval stage.
+
+This makes the flow `Worker → [department lead] → Account Manager → Done` hold
+even when the Account Manager is neither the task's creator nor an assignee.

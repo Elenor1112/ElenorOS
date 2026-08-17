@@ -231,36 +231,57 @@ export async function submitForApproval(opts: {
     throw new ApiError(400, `A task with status ${task.status} cannot be submitted for approval.`);
   }
 
-  // Design Team work is briefed by an Account Manager who is rarely the task's
-  // creator or an assignee (an Art Director typically creates and assigns the
-  // work), so the chain `approvalStages` derives from those alone would often
-  // stop at the Art Director and never reach them. Guaranteeing a seat is done
-  // here, at submission time, by adding the client's Account Manager as a
-  // follow-up — follow-ups already carry full creator-level approval authority
-  // (see isTaskCreatorEquivalent), so this reuses that mechanism rather than
-  // introducing a parallel chain concept, and it is recomputed on every
-  // (re)submission so a client's Account Manager change is picked up rather than
-  // going stale.
+  // An Account Manager who briefed the work is rarely the task's creator or an
+  // assignee (a lead typically creates and assigns it), so the chain
+  // `approvalStages` derives from those alone would often stop one stage short
+  // and never reach them. Guaranteeing a seat is done here, at submission time,
+  // by adding that Account Manager as a follow-up — follow-ups already carry
+  // full creator-level approval authority (see isTaskCreatorEquivalent), so this
+  // reuses that mechanism rather than introducing a parallel chain concept, and
+  // it is recomputed on every (re)submission so an org change is picked up
+  // rather than going stale.
   //
-  // Skipped when the Account Manager already has a seat on the chain (assignee,
+  // Two independent ways an Account Manager earns that guaranteed seat:
+  //  1. The task belongs to the Design Team — the client's accountManagerId is
+  //     who briefed the work (see DESIGN_APPROVAL_DEPARTMENT).
+  //  2. The submitter's OWN direct manager holds the Account Manager role —
+  //     this generalizes the same guarantee to any department: whoever reports
+  //     directly to an Account Manager gets that manager as their final
+  //     approval stage, the same way Design Team's briefing relationship does.
+  // Both are resolved (not just the first that matches) since a task can
+  // plausibly qualify under either reason, though in practice they usually name
+  // the same person.
+  const targetIds = new Set<string>();
+  if (task.department?.name === DESIGN_APPROVAL_DEPARTMENT && task.client?.accountManagerId) {
+    targetIds.add(task.client.accountManagerId);
+  }
+  const submitterManager = await db.user.findUnique({
+    where: { id: user.id },
+    select: { managerId: true, manager: { select: { role: { select: { key: true } } } } },
+  });
+  if (submitterManager?.managerId && submitterManager.manager?.role.key === "ACCOUNT_MANAGER") {
+    targetIds.add(submitterManager.managerId);
+  }
+
+  // Skipped per-candidate when they already have a seat on the chain (assignee,
   // creator, or already a follow-up) — approvalStages' own dedup would collapse
   // a duplicate anyway, but skipping avoids a no-op write and a phantom activity
-  // entry on every resubmission. Also skipped when the client's account manager
-  // is not (or no longer) a valid follow-up candidate — an inactive account or
-  // one that has lost Task.Approve must not be forced onto a chain it cannot
-  // clear; such a task falls back to Task.Approve holders same as any other
-  // chain gap (see isApproverFor), rather than being silently stranded.
-  const accountManagerId = task.client?.accountManagerId ?? null;
+  // entry on every resubmission. Also skipped when the candidate is not (or no
+  // longer) a valid follow-up candidate — an inactive account or one that has
+  // lost Task.Approve must not be forced onto a chain it cannot clear; such a
+  // task falls back to Task.Approve holders same as any other chain gap (see
+  // isApproverFor), rather than being silently stranded.
+  const eligible: string[] = [];
+  for (const candidateId of targetIds) {
+    if (candidateId === user.id) continue;
+    if (task.assignees.some((a) => a.userId === candidateId)) continue;
+    if (isTaskCreatorEquivalent({ id: candidateId }, task)) continue;
+    if (await canBeFollowUp(candidateId)) eligible.push(candidateId);
+  }
+
   let followUps = task.followUps ?? [];
-  if (
-    task.department?.name === DESIGN_APPROVAL_DEPARTMENT &&
-    accountManagerId &&
-    accountManagerId !== user.id &&
-    !task.assignees.some((a) => a.userId === accountManagerId) &&
-    !isTaskCreatorEquivalent({ id: accountManagerId }, task) &&
-    (await canBeFollowUp(accountManagerId))
-  ) {
-    const nextFollowUpIds = [...new Set([...taskFollowUpIds(task), accountManagerId])];
+  if (eligible.length) {
+    const nextFollowUpIds = [...new Set([...taskFollowUpIds(task), ...eligible])];
     const { added } = await recordFollowUpChange({
       taskId: task.id,
       followUpIds: nextFollowUpIds,
@@ -275,7 +296,7 @@ export async function submitForApproval(opts: {
         verb: "added follow-up",
         meta: {
           followUpIds: added,
-          reason: "design-approval-account-manager",
+          reason: "account-manager-approval",
         },
       });
     }
