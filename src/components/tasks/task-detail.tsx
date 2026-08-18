@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import {
   X, Plus, Trash2, Send, Check, CheckCircle2, Circle, GitBranch,
   Clock, MessageSquare, Activity as ActivityIcon, Building2, FolderKanban,
+  Paperclip, Upload, Download, Loader2,
 } from "lucide-react";
-import { apiGet, apiSend } from "@/lib/fetcher";
+import { apiGet, apiSend, apiUpload } from "@/lib/fetcher";
 import { Avatar, AvatarGroup } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -214,6 +215,22 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const toggleChecklist = useMutation({
     mutationFn: (v: { itemId: string; done: boolean }) => apiSend(`/api/tasks/${taskId}/checklist`, "PATCH", v),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["task", taskId] }),
+  });
+
+  const attachmentInput = React.useRef<HTMLInputElement>(null);
+  const uploadAttachment = useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+      return apiUpload(`/api/tasks/${taskId}/attachments`, form);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["task", taskId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeAttachment = useMutation({
+    mutationFn: (attachmentId: string) => apiSend(`/api/tasks/attachments/${attachmentId}`, "DELETE"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["task", taskId] }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
@@ -663,6 +680,56 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
                 </div>
               </Section>
 
+              {/* attachments */}
+              <Section icon={Paperclip} title={`Attachments (${task.attachments.length})`}>
+                <input
+                  ref={attachmentInput}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadAttachment.mutate(file);
+                    e.target.value = "";
+                  }}
+                />
+                {task.attachments.length > 0 && (
+                  <div className="mb-2 space-y-1">
+                    {task.attachments.map((a: any) => (
+                      <div key={a.id} className="flex items-center gap-1.5 text-sm">
+                        <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{a.name}</span>
+                        <span className="text-[11px] text-muted-foreground">{formatBytes(a.size)}</span>
+                        <a
+                          href={`/api/tasks/attachments/${a.id}?download=1`}
+                          className="ml-auto rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                          aria-label={`Download ${a.name}`}
+                        >
+                          <Download className="size-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment.mutate(a.id)}
+                          disabled={removeAttachment.isPending}
+                          aria-label={`Delete ${a.name}`}
+                          className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={uploadAttachment.isPending}
+                  onClick={() => attachmentInput.current?.click()}
+                >
+                  {uploadAttachment.isPending ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Upload className="mr-1.5 size-3.5" />}
+                  Attach file
+                </Button>
+              </Section>
+
               {/* subtasks */}
               {task.subtasks.length > 0 && (
                 <Section icon={GitBranch} title={`Subtasks (${task.subtasks.length})`}>
@@ -745,6 +812,12 @@ function MetaRow({ label, children, wide }: { label: string; children: React.Rea
       {children}
     </div>
   );
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function Section({ icon: Icon, title, children }: { icon: React.FC<{ className?: string }>; title: string; children: React.ReactNode }) {

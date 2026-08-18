@@ -57,7 +57,10 @@ const taskInclude = {
     orderBy: { createdAt: "desc" as const },
     take: 30,
   },
-  attachments: true,
+  attachments: {
+    include: { uploadedBy: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+    orderBy: { createdAt: "asc" as const },
+  },
   dependsOn: { include: { prerequisite: { select: { id: true, code: true, title: true, status: true } } } },
   // The approval evidence trail, newest first. Every attempt is returned, not
   // just the open one, so the approver can compare a resubmission against what

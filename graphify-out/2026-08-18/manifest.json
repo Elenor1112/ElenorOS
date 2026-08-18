@@ -30,9 +30,9 @@
     "semantic_hash": "9ee81ae9f7ea35553e46e6345f946f10"
   },
   "prisma/reset-to-ceo.ts": {
-    "mtime": 1787051072.8223114,
-    "ast_hash": "062a245cae75300373ee1e9639005114",
-    "semantic_hash": ""
+    "mtime": 1784628167.2173107,
+    "ast_hash": "e3cb7fa3b7f06a37d0ac1b8a5c7d8a0a",
+    "semantic_hash": "e3cb7fa3b7f06a37d0ac1b8a5c7d8a0a"
   },
   "prisma/seed.ts": {
     "mtime": 1786965352.8087826,
@@ -755,8 +755,8 @@
     "semantic_hash": "aea41d13faf14dd7364d8e45e02cbe6d"
   },
   "src/app/api/tasks/[id]/route.ts": {
-    "mtime": 1787050942.190606,
-    "ast_hash": "5d65ba98082e70546362722c8532ef62",
+    "mtime": 1786615384.5893123,
+    "ast_hash": "662808e2d8e13797a284813bdfe6b15b",
     "semantic_hash": ""
   },
   "src/app/api/tasks/[id]/submission-files/route.ts": {
@@ -920,9 +920,9 @@
     "semantic_hash": "7d5b74b2ac9899bd1c7171bb9aa6de12"
   },
   "src/components/tasks/create-task-dialog.tsx": {
-    "mtime": 1787050973.3557181,
-    "ast_hash": "0af858e53a7bb8dff2f575ab1871ff9a",
-    "semantic_hash": ""
+    "mtime": 1785072241.8336847,
+    "ast_hash": "51c80cd82a4da314459fd53f112a14e0",
+    "semantic_hash": "51c80cd82a4da314459fd53f112a14e0"
   },
   "src/components/tasks/kanban-view.tsx": {
     "mtime": 1786529457.538427,
@@ -955,8 +955,8 @@
     "semantic_hash": "6c01b2d3c67c7ebd0558557f041a1449"
   },
   "src/components/tasks/task-detail.tsx": {
-    "mtime": 1787051011.0230222,
-    "ast_hash": "7ac6b29531d845b857c1fc2afad71318",
+    "mtime": 1786615608.5810559,
+    "ast_hash": "97241d8f0fc26d94d6cecc78c62b80a0",
     "semantic_hash": ""
   },
   "src/components/tasks/tasks-workspace.tsx": {
@@ -1303,15 +1303,5 @@
     "mtime": 1785059696.2694087,
     "ast_hash": "e180ff18e18aa9288603d4918291758d",
     "semantic_hash": "e180ff18e18aa9288603d4918291758d"
-  },
-  "src/app/api/tasks/[id]/attachments/route.ts": {
-    "mtime": 1787050920.8182595,
-    "ast_hash": "6d1027d1f772b68294b66885b2e1fbba",
-    "semantic_hash": ""
-  },
-  "src/app/api/tasks/attachments/[id]/route.ts": {
-    "mtime": 1787050933.7544641,
-    "ast_hash": "8b63e626c33c2292f1bf7f5e9d738de4",
-    "semantic_hash": ""
   }
 }

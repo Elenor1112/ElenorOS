@@ -24,7 +24,7 @@ async function main() {
   // 1) Wipe operational data (order respects foreign keys).
   console.log("Deleting operational data…");
   await db.checklistItem.deleteMany({});
-  await db.attachment.deleteMany({});
+  await db.taskAttachment.deleteMany({});
   await db.comment.deleteMany({});
   await db.activity.deleteMany({});
   await db.taskAssignee.deleteMany({});

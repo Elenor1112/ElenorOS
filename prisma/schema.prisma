@@ -132,48 +132,49 @@ model User {
   permissions UserPermission[]
 
   // Relations
-  createdTasks      Task[]              @relation("TaskCreatedBy")
-  assignedTasks     TaskAssignee[]
-  workerOn          TaskWorker[]        @relation("TaskWorkers")
+  createdTasks       Task[]               @relation("TaskCreatedBy")
+  assignedTasks      TaskAssignee[]
+  workerOn           TaskWorker[]         @relation("TaskWorkers")
   /// Deprecated alongside `Task.workerId`; kept only to satisfy the relation.
-  workedTasks       Task[]              @relation("TaskWorker")
-  workerAssignments WorkerAssignment[]  @relation("WorkerAssignmentWorker")
-  workerDelegations WorkerAssignment[]  @relation("WorkerAssignmentAssignedBy")
-  approvedTasks     Task[]              @relation("TaskApprovedBy")
-  taskSubmissions   TaskSubmission[]     @relation("TaskSubmissionAuthor")
-  taskDecisions     TaskSubmission[]     @relation("TaskSubmissionDecider")
-  taskApprovalSteps TaskApprovalStep[]   @relation("TaskApprovalStepApprover")
-  taskEvidenceFiles TaskSubmissionFile[] @relation("TaskSubmissionFileUploader")
-  taskFollows       TaskFollower[]
+  workedTasks        Task[]               @relation("TaskWorker")
+  workerAssignments  WorkerAssignment[]   @relation("WorkerAssignmentWorker")
+  workerDelegations  WorkerAssignment[]   @relation("WorkerAssignmentAssignedBy")
+  approvedTasks      Task[]               @relation("TaskApprovedBy")
+  taskSubmissions    TaskSubmission[]     @relation("TaskSubmissionAuthor")
+  taskDecisions      TaskSubmission[]     @relation("TaskSubmissionDecider")
+  taskApprovalSteps  TaskApprovalStep[]   @relation("TaskApprovalStepApprover")
+  taskEvidenceFiles  TaskSubmissionFile[] @relation("TaskSubmissionFileUploader")
+  taskAttachments    TaskAttachment[]     @relation("TaskAttachmentUploader")
+  taskFollows        TaskFollower[]
   /// Tasks this user is a follow-up on — a delegated stand-in for the creator.
   /// Distinct from `taskFollows`, which is a passive watch with no authority.
-  taskFollowUps     TaskFollowUp[]      @relation("TaskFollowUpUser")
+  taskFollowUps      TaskFollowUp[]       @relation("TaskFollowUpUser")
   /// Follow-up nominations this user made, kept so "who put them there?" is
   /// answerable without reading the activity log.
-  taskFollowUpsAdded TaskFollowUp[]     @relation("TaskFollowUpAddedBy")
-  comments          Comment[]
-  activities        Activity[]
-  projectsLed       Project[]           @relation("ProjectLead")
-  projectMembers    ProjectMember[]
-  leaveRequests     LeaveRequest[]      @relation("LeaveRequester")
-  leaveActing       LeaveRequest[]      @relation("LeaveActing")
-  approvalsMade     ApprovalStep[]      @relation("ApprovalApprover")
-  permissionReqs    PermissionRequest[]
-  resignations      Resignation[]
-  notifications     Notification[]
-  pushSubs          PushSubscription[]
-  avatar            UserAvatar?
-  auditLogs         AuditLog[]
-  refreshTokens     RefreshToken[]
-  eotmScores        EotmScore[]
-  eotmWins          EotmWinner[]
-  warnings          Warning[]           @relation("WarnedUser")
-  warningsIssued    Warning[]           @relation("WarnedBy")
-  reviewsreceived   PerformanceReview[] @relation("ReviewSubject")
-  reviewsGiven      PerformanceReview[] @relation("ReviewAuthor")
-  documents         EmployeeDocument[]
-  achievements      Achievement[]
-  attendances       Attendance[]
+  taskFollowUpsAdded TaskFollowUp[]       @relation("TaskFollowUpAddedBy")
+  comments           Comment[]
+  activities         Activity[]
+  projectsLed        Project[]            @relation("ProjectLead")
+  projectMembers     ProjectMember[]
+  leaveRequests      LeaveRequest[]       @relation("LeaveRequester")
+  leaveActing        LeaveRequest[]       @relation("LeaveActing")
+  approvalsMade      ApprovalStep[]       @relation("ApprovalApprover")
+  permissionReqs     PermissionRequest[]
+  resignations       Resignation[]
+  notifications      Notification[]
+  pushSubs           PushSubscription[]
+  avatar             UserAvatar?
+  auditLogs          AuditLog[]
+  refreshTokens      RefreshToken[]
+  eotmScores         EotmScore[]
+  eotmWins           EotmWinner[]
+  warnings           Warning[]            @relation("WarnedUser")
+  warningsIssued     Warning[]            @relation("WarnedBy")
+  reviewsreceived    PerformanceReview[]  @relation("ReviewSubject")
+  reviewsGiven       PerformanceReview[]  @relation("ReviewAuthor")
+  documents          EmployeeDocument[]
+  achievements       Achievement[]
+  attendances        Attendance[]
 
   jobDescription        JobDescription?         @relation("EmployeeJobDescription")
   jobDescriptionUploads JobDescriptionVersion[] @relation("JobDescriptionUploader")
@@ -416,8 +417,8 @@ model Task {
   parent   Task?   @relation("Subtasks", fields: [parentId], references: [id])
   subtasks Task[]  @relation("Subtasks")
 
-  assignees   TaskAssignee[]
-  followers   TaskFollower[]
+  assignees TaskAssignee[]
+  followers TaskFollower[]
 
   /// People an assignee has pulled in to carry the CREATOR's authority on this
   /// task, as a delegated stand-in for whoever briefed it.
@@ -432,9 +433,9 @@ model Task {
   /// unblock it — it does not make the work climb a longer chain.
   followUps   TaskFollowUp[]
   labels      TaskLabel[]
-  comments    Comment[]       @relation("TaskComments")
-  activities  Activity[]      @relation("TaskActivities")
-  attachments Attachment[]    @relation("TaskAttachments")
+  comments    Comment[]        @relation("TaskComments")
+  activities  Activity[]       @relation("TaskActivities")
+  attachments TaskAttachment[] @relation("TaskAttachments")
   checklist   ChecklistItem[]
 
   dependsOn  TaskDependency[] @relation("Dependent")
@@ -552,15 +553,15 @@ model TaskSubmission {
   url   String?
   files TaskSubmissionFile[]
 
-  decision   SubmissionDecision @default(PENDING)
+  decision    SubmissionDecision @default(PENDING)
   /// Who FINALLY resolved the submission, and why. On a multi-stage chain this
   /// is the last approver (the one whose approval wrote DONE) or whoever
   /// rejected; the intermediate approvals live in `approvals` below. `comment`
   /// carries the rejection reason back to the worker — the whole point of
   /// bouncing a task rather than fixing it silently.
   decidedById String?
-  decidedBy   User?     @relation("TaskSubmissionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
-  decidedAt   DateTime? @db.Timestamptz
+  decidedBy   User?              @relation("TaskSubmissionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt   DateTime?          @db.Timestamptz
   comment     String?
 
   /// Every stage sign-off on this submission, in order.
@@ -790,15 +791,37 @@ model ChecklistItem {
   order  Int     @default(0)
 }
 
-model Attachment {
-  id        String   @id @default(cuid())
-  name      String
-  url       String
-  size      Int?
-  mimeType  String?
-  task      Task?    @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
-  taskId    String?
-  createdAt DateTime @default(now()) @db.Timestamptz
+/// A file attached directly to a task — set at creation or added later, and
+/// independent of the approval evidence trail (see TaskSubmissionFile, which
+/// is scoped to "proof of completion" rather than general reference material).
+///
+/// Split from its bytes the same way SalesAttachment/SalesAttachmentFile is,
+/// so a listing query never has to pull payload data along with it.
+model TaskAttachment {
+  id String @id @default(cuid())
+
+  task   Task   @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+
+  name     String
+  mimeType String
+  size     Int
+  /// sha256 — used as the ETag and to detect re-uploads of identical bytes.
+  checksum String
+
+  uploadedById String?
+  uploadedBy   User?   @relation("TaskAttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  file      TaskAttachmentFile?
+  createdAt DateTime            @default(now()) @db.Timestamptz
+
+  @@index([taskId])
+}
+
+model TaskAttachmentFile {
+  attachmentId String         @id
+  attachment   TaskAttachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  data         Bytes
 }
 
 model Comment {
