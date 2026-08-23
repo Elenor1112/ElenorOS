@@ -940,14 +940,14 @@
     "semantic_hash": "e76f0f9c920dd475409ab83d757e545a"
   },
   "src/components/tasks/task-approval.tsx": {
-    "mtime": 1787475969.4479432,
-    "ast_hash": "4fe6426d4b1d4a00ba92a65f6524efbb",
+    "mtime": 1786965054.9206755,
+    "ast_hash": "3e561f03cafa803f9bd3965464ab0eaa",
     "semantic_hash": ""
   },
   "src/components/tasks/task-bits.tsx": {
-    "mtime": 1787475844.1756551,
-    "ast_hash": "9c475ecca475c60dd9ce6ab0ea4f77f4",
-    "semantic_hash": ""
+    "mtime": 1786529460.1069572,
+    "ast_hash": "525591ff22233b932f0c5145e26f8a1d",
+    "semantic_hash": "525591ff22233b932f0c5145e26f8a1d"
   },
   "src/components/tasks/task-board.tsx": {
     "mtime": 1785420920.0524049,
@@ -955,8 +955,8 @@
     "semantic_hash": "6c01b2d3c67c7ebd0558557f041a1449"
   },
   "src/components/tasks/task-detail.tsx": {
-    "mtime": 1787475865.921991,
-    "ast_hash": "1068b5a678d46f37bfb62ce204b9a18a",
+    "mtime": 1787051011.0230222,
+    "ast_hash": "7ac6b29531d845b857c1fc2afad71318",
     "semantic_hash": ""
   },
   "src/components/tasks/tasks-workspace.tsx": {
@@ -1150,8 +1150,8 @@
     "semantic_hash": "d29bc5df53e4f001f2d753c41dda7ed6"
   },
   "src/lib/task-lifecycle.ts": {
-    "mtime": 1787475895.491589,
-    "ast_hash": "ffee2eb3d1a442c72364c581f56b3696",
+    "mtime": 1786966678.036709,
+    "ast_hash": "558e6e3bb0ef00617090af7d2f8c9299",
     "semantic_hash": ""
   },
   "src/lib/task-status.ts": {
@@ -1312,11 +1312,6 @@
   "src/app/api/tasks/attachments/[id]/route.ts": {
     "mtime": 1787050933.7544641,
     "ast_hash": "8b63e626c33c2292f1bf7f5e9d738de4",
-    "semantic_hash": ""
-  },
-  "src/app/api/tasks/[id]/force-complete/route.ts": {
-    "mtime": 1787475921.6015043,
-    "ast_hash": "3e621ffeb1be36d3e3089753814f23f9",
     "semantic_hash": ""
   }
 }

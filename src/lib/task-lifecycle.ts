@@ -602,6 +602,94 @@ export async function rejectTask(opts: {
   });
 }
 
+/**
+ * Super-admin shortcut: mark a task Done without going through the approval
+ * chain, from any status. Operations Manager and CEO only — everybody else
+ * still reaches DONE exclusively through `approveTask` above.
+ *
+ * If a submission happens to be under review, it is resolved as approved
+ * (rather than left dangling PENDING) so the evidence trail stays coherent;
+ * a task with no submission at all (still in EDITING) is completed anyway,
+ * since the whole point of the shortcut is that Operations Management does
+ * not have to ask anyone first.
+ */
+export async function forceCompleteTask(opts: {
+  user: SessionUser;
+  task: LifecycleTask;
+  comment?: string | null;
+}) {
+  const { user, task } = opts;
+  if (!user.isSuperAdmin) {
+    throw new ApiError(403, "Only Operations Manager or CEO can mark a task Done directly.");
+  }
+  if (task.status === "DONE") {
+    throw new ApiError(409, "This task is already Done.");
+  }
+  if (task.status === "CANCELLED") {
+    throw new ApiError(409, "This task is cancelled — reopen it before marking it Done.");
+  }
+
+  const comment = opts.comment?.trim() || null;
+  const now = new Date();
+
+  const active = await db.taskSubmission.findFirst({
+    where: { taskId: task.id, decision: "PENDING" },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, submittedById: true },
+  });
+
+  await db.$transaction(async (tx) => {
+    if (active) {
+      await tx.taskSubmission.update({
+        where: { id: active.id },
+        data: { decision: "APPROVED", decidedById: user.id, decidedAt: now, comment },
+      });
+    }
+    await tx.task.update({
+      where: { id: task.id },
+      data: {
+        status: "DONE",
+        approvalStatus: "APPROVED",
+        progress: 100,
+        approvedById: user.id,
+        approvedAt: now,
+        activeSubmissionId: null,
+        approvalStage: 0,
+      },
+    });
+  });
+
+  await logActivity({
+    actorId: user.id,
+    taskId: task.id,
+    verb: "approved (override — marked done directly)",
+    meta: { submissionId: active?.id, comment: comment || undefined },
+  });
+
+  const recipients = active
+    ? submitterAndOwners(task, active.submittedById, user.id)
+    : (() => {
+        const ids = new Set<string>([
+          task.createdById,
+          ...taskFollowUpIds(task),
+          ...task.assignees.map((a) => a.userId),
+          ...taskWorkerIds(task),
+        ]);
+        ids.delete(user.id);
+        return [...ids];
+      })();
+
+  if (recipients.length) {
+    await notifyMany(recipients, {
+      type: "TASK_APPROVED",
+      title: "Task marked done",
+      body: `${user.firstName} ${user.lastName} marked "${task.title}" (${task.code}) as Done.`,
+      link: `/tasks?task=${task.id}`,
+      meta: { taskId: task.id },
+    });
+  }
+}
+
 // ─── Internals ───────────────────────────────────────────────
 
 /**

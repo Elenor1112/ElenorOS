@@ -67,6 +67,15 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   // letting the user click into a guaranteed 403.
   const canEditDetails = can("Task.EditDetails");
 
+  // Project is also gated by Task.EditDetails server-side (projectId is a
+  // PRIVILEGED_FIELD in the PATCH route) — only fetched for people who can
+  // actually use the picker.
+  const { data: projectsData } = useQuery({
+    queryKey: ["projects", "picker"],
+    queryFn: () => apiGet<{ projects: { id: string; name: string }[] }>("/api/projects"),
+    enabled: canEditDetails,
+  });
+
   // Worker = who executes, as opposed to assignees, who stay accountable.
   // Delegation is scoped to your own tasks, so mirror the server's rule here to
   // avoid offering a control that would 403.
@@ -607,8 +616,19 @@ function Panel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
                     <span className="text-sm text-muted-foreground">Internal</span>
                   )}
                 </MetaRow>
-                <MetaRow label="Project">
-                  {task.project ? (
+                <MetaRow label="Project" wide={canEditDetails}>
+                  {canEditDetails ? (
+                    <Select
+                      value={task.project?.id ?? ""}
+                      onChange={(e) => patch.mutate({ projectId: e.target.value || null })}
+                      className="h-8"
+                    >
+                      <option value="">No project</option>
+                      {projectsData?.projects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </Select>
+                  ) : task.project ? (
                     <span className="flex items-center gap-1.5 text-sm">
                       <FolderKanban className="size-3.5 shrink-0 text-muted-foreground" />
                       {task.project.name}

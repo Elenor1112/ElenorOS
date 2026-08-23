@@ -177,7 +177,11 @@ export function TaskCard({ task, onClick }: { task: TaskListItem; onClick: () =>
           )}
           <DeadlinePill deadline={task.deadline} status={task.status} />
         </div>
-        <AvatarGroup users={task.assignees.map((a) => a.user)} size={24} max={3} />
+        <AvatarGroup
+          users={(task.workers?.length ? task.workers : task.assignees).map((a) => a.user)}
+          size={24}
+          max={3}
+        />
       </div>
     </div>
   );

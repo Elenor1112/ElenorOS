@@ -102,10 +102,18 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
     qc.invalidateQueries({ queryKey: ["tasks"] });
   };
 
+  // Operations Manager / CEO shortcut: skip the approval chain entirely.
+  // Shown alongside the normal flow, not instead of it — everyone else still
+  // goes through submit-then-approve.
+  const canForceComplete = me.isSuperAdmin && task.status !== "DONE" && task.status !== "CANCELLED";
+
   return (
     <div className="mt-5">
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-        <ShieldCheck className="size-4 text-muted-foreground" /> Approval
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <ShieldCheck className="size-4 text-muted-foreground" /> Approval
+        </div>
+        {canForceComplete && <ForceCompleteButton taskId={taskId} onDone={invalidate} />}
       </div>
 
       {task.status === "DONE" && task.approvedBy && (
@@ -182,6 +190,50 @@ export function TaskApproval({ task, taskId }: { task: any; taskId: string }) {
         </details>
       )}
     </div>
+  );
+}
+
+/**
+ * Operations Manager / CEO only: mark the task Done without submitting
+ * evidence or waiting on the approval chain. A confirm step guards against a
+ * misclick, since this skips a workflow everyone else has to go through.
+ */
+function ForceCompleteButton({ taskId, onDone }: { taskId: string; onDone: () => void }) {
+  const [confirming, setConfirming] = React.useState(false);
+
+  const complete = useMutation({
+    mutationFn: () => apiSend(`/api/tasks/${taskId}/force-complete`, "POST", {}),
+    onSuccess: () => {
+      toast.success("Task marked Done");
+      setConfirming(false);
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">Skip approval and mark Done?</span>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={complete.isPending}
+          onClick={() => complete.mutate()}
+        >
+          Confirm
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Button size="sm" variant="outline" onClick={() => setConfirming(true)}>
+      <ShieldCheck className="mr-1.5 size-3.5" /> Mark Done
+    </Button>
   );
 }
 
@@ -429,6 +481,7 @@ function SubmitForm({
   const [open, setOpen] = React.useState(false);
   const [notes, setNotes] = React.useState("");
   const [url, setUrl] = React.useState("");
+  const [dragging, setDragging] = React.useState(false);
   const fileInput = React.useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
 
@@ -512,6 +565,19 @@ function SubmitForm({
     for (const file of pastedFiles) upload.mutate(file);
   };
 
+  /**
+   * Dropping files anywhere on the form routes through the SAME upload
+   * mutation as the file-picker and paste, for the same reason: one path to
+   * keep in sync rather than a separate drop-specific upload flow.
+   */
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+    const dropped = e.dataTransfer?.files;
+    if (!dropped?.length) return;
+    for (const file of Array.from(dropped)) upload.mutate(file);
+  };
+
   if (!open) {
     return (
       <Button size="sm" className="mt-2" onClick={() => setOpen(true)}>
@@ -523,12 +589,20 @@ function SubmitForm({
 
   return (
     <div
-      className="mt-2 space-y-2 rounded-xl border border-border bg-background p-3"
+      className={`mt-2 space-y-2 rounded-xl border p-3 transition-colors ${
+        dragging ? "border-primary bg-primary/5" : "border-border bg-background"
+      }`}
       onPaste={handlePaste}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
     >
       <p className="text-xs text-muted-foreground">
         Attach proof of completion — a file, a link, or a note. At least one is required.
-        {" "}Or paste an image with <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-medium">Ctrl+V</kbd>.
+        {" "}Drag & drop, or paste an image with <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-medium">Ctrl+V</kbd>.
       </p>
 
       <Textarea
@@ -551,7 +625,15 @@ function SubmitForm({
         <div className="space-y-1">
           {files.map((f) => (
             <div key={f.id} className="flex items-center gap-1.5 text-sm">
-              <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+              {f.mimeType.startsWith("image/") ? (
+                <img
+                  src={`/api/tasks/submission-files/${f.id}`}
+                  alt=""
+                  className="size-8 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+              )}
               <span className="truncate">{f.name}</span>
               <span className="text-[11px] text-muted-foreground">{formatBytes(f.size)}</span>
               <button
