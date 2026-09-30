@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requirePermission, audit, toErrorResponse } from "@/lib/api";
+import { requireUser, requirePermission, audit, toErrorResponse, ApiError } from "@/lib/api";
 import { notify } from "@/lib/notify";
+import { isProCoder } from "@/lib/eotm-pro";
 
 const schema = z.object({
   period: z.string(),
@@ -11,16 +12,25 @@ const schema = z.object({
   reward: z.string().optional(),
 });
 
+// Pro Coder picks with no conditions — justification optional.
+const proSchema = schema.extend({ justification: z.string().optional() });
+
 export async function POST(req: NextRequest) {
   try {
-    const actor = await requirePermission("Eotm.Manage");
-    const data = schema.parse(await req.json());
+    const sessionUser = await requireUser();
+    const pro = isProCoder(sessionUser);
+    const actor = pro ? sessionUser : await requirePermission("Eotm.Manage");
+    const data = (pro ? proSchema : schema).parse(await req.json());
+    if (pro) {
+      const target = await db.user.findUnique({ where: { id: data.userId }, select: { id: true } });
+      if (!target) throw new ApiError(404, "Employee not found");
+    }
     const score = await db.eotmScore.findUnique({ where: { userId_period: { userId: data.userId, period: data.period } } });
 
     const winner = await db.eotmWinner.upsert({
       where: { period: data.period },
-      update: { userId: data.userId, total: score?.total ?? 0, overridden: true, justification: data.justification, reward: data.reward },
-      create: { period: data.period, userId: data.userId, total: score?.total ?? 0, overridden: true, justification: data.justification, reward: data.reward },
+      update: { userId: data.userId, total: score?.total ?? 0, overridden: true, justification: data.justification || null, reward: data.reward },
+      create: { period: data.period, userId: data.userId, total: score?.total ?? 0, overridden: true, justification: data.justification || null, reward: data.reward },
     });
 
     // award achievement + notify

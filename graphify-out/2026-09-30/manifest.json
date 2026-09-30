@@ -170,9 +170,9 @@
     "semantic_hash": "04fd1b0ea14765e9a6e6883118f2f4c5"
   },
   "src/app/(app)/eotm/eotm-client.tsx": {
-    "mtime": 1790772344.6188796,
-    "ast_hash": "169ecb8f814950fbccbf7f0587abdfe4",
-    "semantic_hash": ""
+    "mtime": 1784619969.0029347,
+    "ast_hash": "f6b04939ae3bf2acdc87c9ded4da3391",
+    "semantic_hash": "f6b04939ae3bf2acdc87c9ded4da3391"
   },
   "src/app/(app)/eotm/page.tsx": {
     "mtime": 1784619975.973811,
@@ -510,9 +510,9 @@
     "semantic_hash": "66f72b179122b376905c2d268825db29"
   },
   "src/app/api/eotm/override/route.ts": {
-    "mtime": 1790772328.1972036,
-    "ast_hash": "1e0e8aee300ae49997669754b089c488",
-    "semantic_hash": ""
+    "mtime": 1784619858.319506,
+    "ast_hash": "a77597ec330827e164c249d85573f706",
+    "semantic_hash": "a77597ec330827e164c249d85573f706"
   },
   "src/app/api/eotm/route.ts": {
     "mtime": 1784619843.6037822,
@@ -1317,11 +1317,6 @@
   "src/app/api/tasks/[id]/force-complete/route.ts": {
     "mtime": 1787475921.6015043,
     "ast_hash": "3e621ffeb1be36d3e3089753814f23f9",
-    "semantic_hash": ""
-  },
-  "src/lib/eotm-pro.ts": {
-    "mtime": 1790772315.4537585,
-    "ast_hash": "f593f8a6a3578fd05722025b9cac0420",
     "semantic_hash": ""
   }
 }

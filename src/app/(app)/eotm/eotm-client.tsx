@@ -3,7 +3,7 @@ import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Trophy, Medal, Crown, Settings2, Loader2, Sparkles } from "lucide-react";
+import { Trophy, Medal, Crown, Settings2, Loader2, Sparkles, UserPlus } from "lucide-react";
 import { apiGet, apiSend } from "@/lib/fetcher";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,9 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCan } from "@/components/session-context";
+import { Select } from "@/components/ui/select";
+import { useCan, useSession } from "@/components/session-context";
+import { isProCoder } from "@/lib/eotm-pro";
 
 const COMPONENTS = [
   { key: "taskCompletion", label: "Task completion", weight: "taskCompletionWeight" },
@@ -30,7 +32,11 @@ export function EotmClient() {
   const can = useCan();
   const qc = useQueryClient();
   const canManage = can("Eotm.Manage");
+  // Pro Coder can make anyone Employee of the Month, no conditions.
+  const pro = isProCoder(useSession());
+  const canPick = canManage || pro;
   const [cfgOpen, setCfgOpen] = React.useState(false);
+  const [pickAnyOpen, setPickAnyOpen] = React.useState(false);
   const [overrideFor, setOverrideFor] = React.useState<any>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["eotm"], queryFn: () => apiGet<any>("/api/eotm") });
@@ -70,9 +76,14 @@ export function EotmClient() {
         </motion.div>
       )}
 
-      {canManage && (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={() => setCfgOpen(true)}><Settings2 className="size-4" /> Scoring weights</Button>
+      {canPick && (
+        <div className="flex justify-end gap-2">
+          {pro && (
+            <Button variant="outline" size="sm" onClick={() => setPickAnyOpen(true)}><UserPlus className="size-4" /> Pick any employee</Button>
+          )}
+          {canManage && (
+            <Button variant="outline" size="sm" onClick={() => setCfgOpen(true)}><Settings2 className="size-4" /> Scoring weights</Button>
+          )}
         </div>
       )}
 
@@ -87,7 +98,7 @@ export function EotmClient() {
             <div className="mt-2 font-semibold">{p.user?.firstName} {p.user?.lastName}</div>
             <div className="text-xs text-muted-foreground">{p.user?.jobTitle}</div>
             <div className="mt-1 text-lg font-bold text-primary">{p.total}</div>
-            {canManage && p.rank !== 1 && (
+            {canPick && (pro || p.rank !== 1) && (
               <Button size="sm" variant="ghost" className="mt-1 text-xs" onClick={() => setOverrideFor({ ...p, period: data.period })}>Make winner</Button>
             )}
           </Card>
@@ -115,7 +126,7 @@ export function EotmClient() {
               <div className="text-right">
                 <div className="text-lg font-bold">{p.total}</div>
               </div>
-              {canManage && p.rank !== 1 && (
+              {canPick && (pro || p.rank !== 1) && (
                 <Button size="sm" variant="ghost" onClick={() => setOverrideFor({ ...p, period: data.period })}>Override</Button>
               )}
             </div>
@@ -144,7 +155,13 @@ export function EotmClient() {
       )}
 
       {canManage && <WeightsDialog open={cfgOpen} onClose={() => setCfgOpen(false)} config={data.config} />}
-      {canManage && overrideFor && <OverrideDialog data={overrideFor} onClose={() => setOverrideFor(null)} />}
+      {canPick && overrideFor && <OverrideDialog data={overrideFor} pro={pro} onClose={() => setOverrideFor(null)} />}
+      {pro && pickAnyOpen && (
+        <PickAnyDialog
+          onClose={() => setPickAnyOpen(false)}
+          onPick={(user) => { setPickAnyOpen(false); setOverrideFor({ userId: user.id, user, period: data.period }); }}
+        />
+      )}
     </div>
   );
 }
@@ -190,7 +207,32 @@ function WeightsDialog({ open, onClose, config }: { open: boolean; onClose: () =
   );
 }
 
-function OverrideDialog({ data, onClose }: { data: any; onClose: () => void }) {
+function PickAnyDialog({ onClose, onPick }: { onClose: () => void; onPick: (user: any) => void }) {
+  const [userId, setUserId] = React.useState("");
+  const { data, isLoading } = useQuery({ queryKey: ["employees", "eotm-pick"], queryFn: () => apiGet<any>("/api/employees") });
+  const employees: any[] = data?.employees ?? [];
+  return (
+    <Dialog open onClose={onClose} title="Pick any employee" description="Choose anyone to be Employee of the Month.">
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label>Employee</Label>
+          <Select value={userId} onChange={(e) => setUserId(e.target.value)} disabled={isLoading}>
+            <option value="">{isLoading ? "Loading…" : "Select an employee"}</option>
+            {employees.map((u) => (
+              <option key={u.id} value={u.id}>{u.firstName} {u.lastName}{u.jobTitle ? ` — ${u.jobTitle}` : ""}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => { const u = employees.find((x) => x.id === userId); if (u) onPick(u); }} disabled={!userId}>Continue</Button>
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
+function OverrideDialog({ data, pro, onClose }: { data: any; pro?: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const [justification, setJustification] = React.useState("");
   const [reward, setReward] = React.useState("");
@@ -202,11 +244,11 @@ function OverrideDialog({ data, onClose }: { data: any; onClose: () => void }) {
   return (
     <Dialog open onClose={onClose} title="Override winner" description={`Set ${data.user?.firstName} ${data.user?.lastName} as Employee of the Month.`}>
       <div className="space-y-3">
-        <div className="space-y-1.5"><Label>Justification</Label><Textarea value={justification} onChange={(e) => setJustification(e.target.value)} placeholder="Why this override?" /></div>
+        <div className="space-y-1.5"><Label>Justification</Label><Textarea value={justification} onChange={(e) => setJustification(e.target.value)} placeholder={pro ? "Optional" : "Why this override?"} /></div>
         <div className="space-y-1.5"><Label>Reward (optional)</Label><Input value={reward} onChange={(e) => setReward(e.target.value)} placeholder="e.g. Bonus day off" /></div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => save.mutate()} disabled={!justification || save.isPending}>{save.isPending && <Loader2 className="size-4 animate-spin" />} Confirm</Button>
+          <Button onClick={() => save.mutate()} disabled={(!pro && !justification) || save.isPending}>{save.isPending && <Loader2 className="size-4 animate-spin" />} Confirm</Button>
         </div>
       </div>
     </Dialog>
