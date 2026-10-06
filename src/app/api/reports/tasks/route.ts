@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireUser, toErrorResponse, ApiError } from "@/lib/api";
-import { can } from "@/lib/rbac";
+import { can, REPORT_TEAM_ROLES } from "@/lib/rbac";
 import { tableResponse, type Table } from "@/lib/export";
 import { fullName } from "@/lib/utils";
 import { companyToday, isDateOnly, requireUserDateTime, zonedParts } from "@/lib/timezone";
@@ -24,8 +24,9 @@ import type { Prisma, RoleKey, TaskStatus } from "@prisma/client";
  * workers — not the creator, so a manager who briefs forty tasks is not charged
  * with forty late deliveries. Cancelled tasks are excluded throughout.
  *
- * Without Reports.View the report is always scoped to the caller, whatever the
- * query string asks for. `?export=csv` returns the per-employee table.
+ * Scope: Reports.View sees everyone; Reports.ViewTeam (Art Director) sees
+ * themselves and their team; anyone else only themselves — whatever the query
+ * string asks for. `?export=csv` returns the per-employee table, same scope.
  */
 
 const OPEN: TaskStatus[] = ["TODO", "IN_PROGRESS", "HOLD", "WAITING_APPROVAL", "EDITING"];
@@ -87,7 +88,12 @@ const rate = (onTime: number, late: number) =>
 export async function GET(req: NextRequest) {
   try {
     const user = await requireUser();
-    const canViewAll = can(user, "Reports.View");
+    // all: Reports.View (Account / Operations / PR & Sales managers, CEO).
+    // team: Reports.ViewTeam — self + REPORT_TEAM_ROLES + direct reports.
+    // self: everyone else.
+    const scope: "all" | "team" | "self" = can(user, "Reports.View")
+      ? "all"
+      : can(user, "Reports.ViewTeam") ? "team" : "self";
     const sp = req.nextUrl.searchParams;
 
     // ── Range ──
@@ -104,19 +110,41 @@ export async function GET(req: NextRequest) {
     const bucket: "day" | "week" = span <= 45 ? "day" : "week";
 
     // ── Who the report covers ──
-    const role = canViewAll ? (sp.get("role") || null) as RoleKey | null : null;
-    const requestedIds = canViewAll
+    // Filters can only narrow within the scope — the user list below is the
+    // hard boundary, whatever the query string asks for.
+    const role = scope !== "self" ? (sp.get("role") || null) as RoleKey | null : null;
+    const requestedIds = scope !== "self"
       ? (sp.get("users") ?? "").split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
-    const [roles, users] = await Promise.all([
+    const visible: Prisma.UserWhereInput =
+      scope === "all"
+        ? { status: "ACTIVE" }
+        : scope === "team"
+          ? {
+              OR: [
+                { id: user.id },
+                {
+                  status: "ACTIVE",
+                  OR: [
+                    { role: { key: { in: REPORT_TEAM_ROLES[user.roleKey] ?? [] } } },
+                    { managerId: user.id },
+                  ],
+                },
+              ],
+            }
+          : { id: user.id };
+
+    const [allRoles, users] = await Promise.all([
       db.role.findMany({ select: { key: true, name: true }, orderBy: { level: "asc" } }),
       db.user.findMany({
-        where: canViewAll ? { status: "ACTIVE" } : { id: user.id },
+        where: visible,
         select: { id: true, firstName: true, lastName: true, role: { select: { key: true, name: true } } },
         orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
       }),
     ]);
+    // Only offer roles that someone in scope actually holds.
+    const roles = allRoles.filter((r) => users.some((u) => u.role.key === r.key));
 
     const subjects = users.filter((u) =>
       (!role || u.role.key === role) &&
@@ -258,7 +286,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       range: { from, to, bucket },
-      canViewAll,
+      scope,
       options: {
         roles,
         users: users.map((u) => ({ id: u.id, name: fullName(u), roleKey: u.role.key })),

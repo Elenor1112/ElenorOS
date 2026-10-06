@@ -71,6 +71,7 @@ export const PERMISSIONS = {
   "Eotm.Manage": "Manage Employee of the Month",
   // Reports / analytics
   "Reports.View": "View reports & analytics",
+  "Reports.ViewTeam": "View and export task reports for your own team (see REPORT_TEAM_ROLES)",
   "Analytics.Company": "View company-wide analytics",
   // Audit & settings
   "Audit.View": "View audit logs",
@@ -339,6 +340,9 @@ export const ROLE_PERMISSIONS: Record<RoleKey, PermissionKey[]> = {
     // jobDescriptionScope), but cannot upload or replace documents — that
     // stays with HR / Account Management.
     "JobDescription.ViewAcknowledgments",
+    // Task reports for their designers and themselves — not company-wide,
+    // which is what Reports.View would grant.
+    "Reports.ViewTeam",
   ],
   DESIGNER: [...baseEmployee, "Task.Edit"],
   CONTENT_CREATOR: [...baseEmployee, "Task.Edit"],
@@ -411,6 +415,18 @@ export const ASSIGNABLE_DEPARTMENTS: Partial<Record<RoleKey, string[]>> = {
  * guaranteed a seat on the chain.
  */
 export const DESIGN_APPROVAL_DEPARTMENT = "Design Team";
+
+/**
+ * Who counts as a leader's team for Reports.ViewTeam.
+ *
+ * A holder's task report covers themselves, everyone whose role is listed here
+ * for theirs, and anyone who reports to them directly (User.managerId). Leaders
+ * who see everyone (Account, Operations, PR & Sales managers, CEO) hold
+ * Reports.View instead and never consult this.
+ */
+export const REPORT_TEAM_ROLES: Partial<Record<RoleKey, RoleKey[]>> = {
+  ART_DIRECTOR: ["DESIGNER"],
+};
 
 // ─── Runtime helpers ─────────────────────────────────────────
 

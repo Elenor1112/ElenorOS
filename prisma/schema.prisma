@@ -181,21 +181,22 @@ model User {
   jobDescriptionAcks    JobDescriptionAck[]     @relation("JobDescriptionAcks")
 
   // ── Sales ──
-  ownedLeads        Lead[]                 @relation("LeadOwner")
-  createdLeads      Lead[]                 @relation("LeadCreatedBy")
-  leadOwnerHistory  LeadOwnerAssignment[]  @relation("LeadOwnerAssignmentOwner")
-  leadOwnerChanges  LeadOwnerAssignment[]  @relation("LeadOwnerAssignmentAssignedBy")
-  organizedMeetings SalesMeeting[]         @relation("MeetingOrganizer")
-  meetingSeats      SalesMeetingAttendee[]
-  discoveryBriefs   DiscoveryBrief[]       @relation("DiscoveryBriefSubmitter")
-  salesFeedback     SalesFeedback[]        @relation("SalesFeedbackAuthor")
-  proposalsPrepared Proposal[]             @relation("ProposalPreparedBy")
-  proposalEvents    ProposalEvent[]        @relation("ProposalEventActor")
-  salesComments     SalesComment[]         @relation("SalesCommentAuthor")
-  salesUploads      SalesAttachment[]      @relation("SalesAttachmentUploader")
-  salesIdeas        SalesIdea[]            @relation("SalesIdeaOwner")
-  salesIdeasCreated SalesIdea[]            @relation("SalesIdeaCreatedBy")
-  accountManaged    Client[]               @relation("ClientAccountManager")
+  ownedLeads          Lead[]                 @relation("LeadOwner")
+  createdLeads        Lead[]                 @relation("LeadCreatedBy")
+  leadOwnerHistory    LeadOwnerAssignment[]  @relation("LeadOwnerAssignmentOwner")
+  leadOwnerChanges    LeadOwnerAssignment[]  @relation("LeadOwnerAssignmentAssignedBy")
+  organizedMeetings   SalesMeeting[]         @relation("MeetingOrganizer")
+  meetingSeats        SalesMeetingAttendee[]
+  discoveryBriefs     DiscoveryBrief[]       @relation("DiscoveryBriefSubmitter")
+  salesFeedback       SalesFeedback[]        @relation("SalesFeedbackAuthor")
+  proposalsPrepared   Proposal[]             @relation("ProposalPreparedBy")
+  leadRequestsCreated LeadRequest[]          @relation("LeadRequestCreatedBy")
+  proposalEvents      ProposalEvent[]        @relation("ProposalEventActor")
+  salesComments       SalesComment[]         @relation("SalesCommentAuthor")
+  salesUploads        SalesAttachment[]      @relation("SalesAttachmentUploader")
+  salesIdeas          SalesIdea[]            @relation("SalesIdeaOwner")
+  salesIdeasCreated   SalesIdea[]            @relation("SalesIdeaCreatedBy")
+  accountManaged      Client[]               @relation("ClientAccountManager")
 
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz
@@ -1451,6 +1452,7 @@ model Lead {
   briefs       DiscoveryBrief[]
   feedback     SalesFeedback[]
   proposals    Proposal[]
+  requests     LeadRequest[]
   activities   SalesActivity[]
   comments     SalesComment[]
   attachments  SalesAttachment[]
@@ -1876,6 +1878,36 @@ model Proposal {
   @@index([status])
 }
 
+/// An additional request on an existing deal (upsell, extra scope). Its amount
+/// is added to Lead.estimatedValue on create and subtracted on delete, so every
+/// pipeline and report total reflects it without joining this table.
+model LeadRequest {
+  id     String @id @default(cuid())
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId String
+
+  /// Values from SERVICES_CATALOG, plus "Others" — described in servicesOther.
+  services      String[]
+  servicesOther String?
+  details       String?
+
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("EGP")
+
+  /// Purchase order reference. The PO document itself is a SalesAttachment.
+  poNumber String?
+
+  createdById String
+  createdBy   User   @relation("LeadRequestCreatedBy", fields: [createdById], references: [id])
+
+  attachments SalesAttachment[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([leadId])
+}
+
 /// Every proposal touchpoint, in order. This is the "timeline records every
 /// event" requirement â€” the denormalized timestamps on Proposal are derived
 /// from these rows for cheap reads.
@@ -2021,6 +2053,9 @@ model SalesAttachment {
   proposalId String?
   proposal   Proposal? @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
+  requestId String?
+  request   LeadRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
   name        String
   mimeType    String
   size        Int
@@ -2042,6 +2077,7 @@ model SalesAttachment {
   @@index([briefId])
   @@index([feedbackId])
   @@index([proposalId])
+  @@index([requestId])
 }
 
 /// The payload, split off so metadata queries never load blobs â€” exactly the

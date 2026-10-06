@@ -66,6 +66,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
             attachments: attachmentFields,
           },
         },
+        requests: {
+          orderBy: { createdAt: "desc" },
+          include: { createdBy: userPick, attachments: attachmentFields },
+        },
         comments: { orderBy: { createdAt: "desc" }, include: { author: userPick } },
         attachments: { orderBy: { createdAt: "desc" }, ...attachmentFields },
         activities: { orderBy: { createdAt: "desc" }, take: 200 },
@@ -105,6 +109,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         ...lead,
         estimatedValue: lead.estimatedValue ? Number(lead.estimatedValue) : null,
         proposals: lead.proposals.map((p) => ({ ...p, amount: p.amount ? Number(p.amount) : null })),
+        requests: lead.requests.map((r) => ({ ...r, amount: Number(r.amount) })),
         activities: lead.activities.map((a) => ({
           ...a,
           actor: a.actorId ? (actorMap.get(a.actorId) ?? null) : null,

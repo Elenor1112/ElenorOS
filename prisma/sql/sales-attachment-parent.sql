@@ -1,8 +1,8 @@
 -- ============================================================
 -- SalesAttachment: exactly one parent
 --
--- SalesAttachment is polymorphic across the five sales objects that can carry
--- files (lead, meeting, discovery brief, feedback, proposal). It uses five
+-- SalesAttachment is polymorphic across the six sales objects that can carry
+-- files (lead, meeting, discovery brief, feedback, proposal, request). It uses six
 -- nullable foreign keys rather than a (entityType, entityId) pair so that
 -- referential integrity and ON DELETE CASCADE remain real database guarantees
 -- instead of application conventions.
@@ -14,7 +14,8 @@
 -- reachable from no page.
 --
 -- Invariant enforced:
---   exactly ONE of leadId / meetingId / briefId / feedbackId / proposalId
+--   exactly ONE of leadId / meetingId / briefId / feedbackId / proposalId /
+--   requestId
 --   is NOT NULL on every row.
 --
 -- Idempotent: safe to re-run. Applied via `npm run db:sync-triggers`.
@@ -29,7 +30,8 @@ ALTER TABLE "SalesAttachment"
     (CASE WHEN "meetingId"  IS NULL THEN 0 ELSE 1 END) +
     (CASE WHEN "briefId"    IS NULL THEN 0 ELSE 1 END) +
     (CASE WHEN "feedbackId" IS NULL THEN 0 ELSE 1 END) +
-    (CASE WHEN "proposalId" IS NULL THEN 0 ELSE 1 END)
+    (CASE WHEN "proposalId" IS NULL THEN 0 ELSE 1 END) +
+    (CASE WHEN "requestId"  IS NULL THEN 0 ELSE 1 END)
     = 1
   );
 

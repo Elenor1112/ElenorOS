@@ -26,7 +26,8 @@ export type AttachmentParent =
   | { meetingId: string }
   | { briefId: string }
   | { feedbackId: string }
-  | { proposalId: string };
+  | { proposalId: string }
+  | { requestId: string };
 
 const MAX_BYTES = 10 * 1024 * 1024;
 

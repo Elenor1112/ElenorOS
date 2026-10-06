@@ -286,6 +286,8 @@ export const SALES_ACTIVITY = {
   PROPOSAL_OPENED: "proposal.opened",
   PROPOSAL_ACCEPTED: "proposal.accepted",
   PROPOSAL_REJECTED: "proposal.rejected",
+  REQUEST_CREATED: "request.created",
+  REQUEST_DELETED: "request.deleted",
   COMMENT_ADDED: "comment.added",
   FILE_UPLOADED: "file.uploaded",
   WON: "lead.won",

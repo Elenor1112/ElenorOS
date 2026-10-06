@@ -31,7 +31,7 @@ type PersonRow = {
 
 type ReportData = {
   range: { from: string; to: string; bucket: "day" | "week" };
-  canViewAll: boolean;
+  scope: "all" | "team" | "self";
   options: {
     roles: { key: string; name: string }[];
     users: { id: string; name: string; roleKey: string }[];
@@ -92,7 +92,9 @@ function detectPreset(from: string, to: string, today: string): Preset {
 export function ReportsClient() {
   const router = useRouter();
   const params = useSearchParams();
-  const canViewAll = useCan()("Reports.View");
+  const can = useCan();
+  // Leaders can narrow by role and person; the API bounds it to their scope.
+  const canFilter = can("Reports.View") || can("Reports.ViewTeam");
   const today = React.useMemo(() => companyToday(), []);
 
   const defaults = presetRange("this-month", today);
@@ -116,8 +118,8 @@ export function ReportsClient() {
   };
 
   const query = new URLSearchParams({ from, to });
-  if (canViewAll && role) query.set("role", role);
-  if (canViewAll && users.length) query.set("users", users.join(","));
+  if (canFilter && role) query.set("role", role);
+  if (canFilter && users.length) query.set("users", users.join(","));
   const qs = query.toString();
 
   const { data, isLoading, isFetching, error } = useQuery({
@@ -154,7 +156,7 @@ export function ReportsClient() {
           onChange={(e) => e.target.value && setParams({ to: e.target.value })}
         />
 
-        {canViewAll && data && (
+        {canFilter && data && (
           <>
             <Select
               value={role}
@@ -194,7 +196,7 @@ export function ReportsClient() {
         <p className="text-sm">
           {format(ymdDate(from), "d MMM yyyy")} – {format(ymdDate(to), "d MMM yyyy")}
           {" · "}{roleName ?? "All roles"}
-          {" · "}{selectedNames.length ? selectedNames.join(", ") : canViewAll ? "All people" : data?.people[0]?.name}
+          {" · "}{selectedNames.length ? selectedNames.join(", ") : data?.scope === "all" ? "All people" : data?.scope === "team" ? "My team" : data?.people[0]?.name}
         </p>
         <p className="text-xs text-muted-foreground">Generated {format(new Date(), "d MMM yyyy, HH:mm")}</p>
       </div>

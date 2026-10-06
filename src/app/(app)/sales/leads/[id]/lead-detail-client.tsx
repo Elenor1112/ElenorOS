@@ -25,7 +25,7 @@ import { useSalesMeta } from "@/components/sales/use-sales-meta";
 import { ConvertDialog } from "@/components/sales/convert-dialog";
 import {
   OverviewTab, TimelineTab, ActivitiesTab, MeetingsTab, DiscoveryTab,
-  FeedbackTab, ProposalTab, TasksTab, FilesTab, CommentsTab, AuditTab,
+  FeedbackTab, ProposalTab, NewRequestTab, TasksTab, FilesTab, CommentsTab, AuditTab,
   type LeadDetail,
 } from "./lead-tabs";
 import { LEAD_STAGE_ORDER, LEAD_STAGE_META, formatMoney } from "@/lib/sales-constants";
@@ -33,7 +33,7 @@ import type { LeadStage } from "@prisma/client";
 
 const TABS = [
   "Overview", "Timeline", "Activities", "Meetings", "Discovery",
-  "Feedback", "Proposal", "Tasks", "Files", "Comments", "Audit Log",
+  "Feedback", "Proposal", "New Request", "Tasks", "Files", "Comments", "Audit Log",
 ] as const;
 type Tab = (typeof TABS)[number];
 
@@ -41,7 +41,7 @@ type Tab = (typeof TABS)[number];
 const TAB_SLUG: Record<Tab, string> = {
   Overview: "overview", Timeline: "timeline", Activities: "activities",
   Meetings: "meetings", Discovery: "discovery", Feedback: "feedback",
-  Proposal: "proposal", Tasks: "tasks", Files: "files",
+  Proposal: "proposal", "New Request": "new-request", Tasks: "tasks", Files: "files",
   Comments: "comments", "Audit Log": "audit",
 };
 
@@ -308,6 +308,7 @@ export function LeadDetailClient({ leadId }: { leadId: string }) {
         {activeTab === "Discovery" && <DiscoveryTab lead={lead} readOnly={readOnly} />}
         {activeTab === "Feedback" && <FeedbackTab lead={lead} readOnly={readOnly} />}
         {activeTab === "Proposal" && <ProposalTab lead={lead} readOnly={readOnly} />}
+        {activeTab === "New Request" && <NewRequestTab lead={lead} readOnly={readOnly} />}
         {activeTab === "Tasks" && <TasksTab lead={lead} />}
         {activeTab === "Files" && <FilesTab lead={lead} readOnly={readOnly} />}
         {activeTab === "Comments" && <CommentsTab lead={lead} />}
@@ -346,6 +347,7 @@ function tabCount(tab: Tab, lead: LeadDetail): number | null {
     case "Discovery": return lead.briefs.length;
     case "Feedback": return lead.feedback.length;
     case "Proposal": return lead.proposals.length;
+    case "New Request": return lead.requests.length;
     case "Tasks": return lead.tasks.length;
     case "Files": return lead.attachments.length;
     case "Comments": return lead.comments.length;

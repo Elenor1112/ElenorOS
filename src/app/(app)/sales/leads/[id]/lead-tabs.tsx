@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Plus, Loader2, Send, CheckCircle2, XCircle, MailOpen, Download, ExternalLink,
-  MessageCircle, ClipboardList, ArrowRight, Trash2,
+  MessageCircle, ClipboardList, ArrowRight, Trash2, Receipt,
 } from "lucide-react";
 import { apiGet, apiSend } from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { MeetingDialog } from "@/components/sales/meeting-dialog";
 import { DiscoveryForm } from "@/components/sales/discovery-form";
 import { FeedbackDialog } from "@/components/sales/feedback-dialog";
 import { ProposalDialog } from "@/components/sales/proposal-dialog";
+import { RequestDialog } from "@/components/sales/request-dialog";
 import {
   SALES_ACTIVITY_META, DEFAULT_ACTIVITY_META, LEAD_STAGE_META,
   MEETING_STATUS_META, MEETING_TYPE_META, BRIEF_STATUS_META,
@@ -89,6 +90,14 @@ export type LeadProposal = {
   attachments: SalesAttachment[];
 };
 
+export type LeadRequest = {
+  id: string; services: string[]; servicesOther: string | null;
+  details: string | null; amount: number; currency: string;
+  poNumber: string | null; createdAt: string;
+  createdBy: PersonRef;
+  attachments: SalesAttachment[];
+};
+
 export type LeadDetail = {
   id: string; code: string; companyName: string; brandName: string | null;
   contactPerson: string | null; jobTitle: string | null; email: string | null;
@@ -109,6 +118,7 @@ export type LeadDetail = {
   briefs: LeadBrief[];
   feedback: LeadFeedback[];
   proposals: LeadProposal[];
+  requests: LeadRequest[];
   comments: { id: string; body: string; createdAt: string; author: PersonRef }[];
   attachments: SalesAttachment[];
   activities: {
@@ -808,6 +818,128 @@ export function ProposalTab({ lead, readOnly }: { lead: LeadDetail; readOnly?: b
         onClose={() => { setOpen(false); setRevisionOf(null); }}
         leadId={lead.id}
         revisionOf={revisionOf}
+      />
+    </div>
+  );
+}
+
+// ─── New Request ─────────────────────────────────────────────
+
+export function NewRequestTab({ lead, readOnly }: { lead: LeadDetail; readOnly?: boolean }) {
+  const can = useCan();
+  const qc = useQueryClient();
+  const [open, setOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState<LeadRequest | null>(null);
+  const editable = can("Sales.LeadEdit") && !readOnly;
+
+  const remove = useMutation({
+    mutationFn: (requestId: string) => apiSend(`/api/sales/requests/${requestId}`, "DELETE"),
+    onSuccess: () => {
+      toast.success("Request deleted — deal value updated");
+      qc.invalidateQueries({ queryKey: LEAD_KEY(lead.id) });
+      qc.invalidateQueries({ queryKey: ["sales-leads"] });
+      qc.invalidateQueries({ queryKey: ["sales-dashboard"] });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Requests may carry different currencies; the total is shown per currency.
+  const totals = lead.requests.reduce<Record<string, number>>((acc, r) => {
+    acc[r.currency] = (acc[r.currency] ?? 0) + r.amount;
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-3">
+      {(editable || lead.requests.length > 0) && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm text-muted-foreground">
+            {lead.requests.length > 0 && (
+              <>
+                {lead.requests.length} request{lead.requests.length === 1 ? "" : "s"} ·{" "}
+                <span className="font-semibold text-foreground">
+                  {Object.entries(totals).map(([cur, v]) => formatMoney(v, cur)).join(" + ")}
+                </span>{" "}
+                added to deal value
+              </>
+            )}
+          </div>
+          {editable && (
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="size-4" /> New request
+            </Button>
+          )}
+        </div>
+      )}
+
+      {lead.requests.length === 0 ? (
+        <EmptyState
+          icon="FilePlus2"
+          title="No requests yet"
+          description="Log extra services the client asks for. Each request's amount is added to the deal value."
+        />
+      ) : (
+        lead.requests.map((r) => (
+          <Card key={r.id} className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {r.services.map((s) => (
+                    <Badge key={s}>{s === "Others" && r.servicesOther ? `Other: ${r.servicesOther}` : s}</Badge>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {r.createdBy.firstName} {r.createdBy.lastName} · {formatDate(r.createdAt)}
+                  {r.poNumber && (
+                    <span className="ml-2 inline-flex items-center gap-1">
+                      <Receipt className="size-3.5" /> PO {r.poNumber}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="text-xl font-bold">{formatMoney(r.amount, r.currency)}</div>
+                {editable && (
+                  <button
+                    onClick={() => setDeleting(r)}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Delete request"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {r.details && (
+              <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">{r.details}</p>
+            )}
+
+            <div className="mt-4 border-t border-border pt-3">
+              <AttachmentsPanel
+                parent={{ requestId: r.id }}
+                attachments={r.attachments}
+                invalidateKeys={[LEAD_KEY(lead.id)]}
+                readOnly={!editable}
+              />
+            </div>
+          </Card>
+        ))
+      )}
+
+      <RequestDialog open={open} onClose={() => setOpen(false)} leadId={lead.id} />
+      <ConfirmDeleteDialog
+        open={Boolean(deleting)}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+        title="Delete this request?"
+        description={
+          deleting
+            ? `${formatMoney(deleting.amount, deleting.currency)} will be subtracted from the deal value, and its files removed.`
+            : ""
+        }
+        pending={remove.isPending}
       />
     </div>
   );

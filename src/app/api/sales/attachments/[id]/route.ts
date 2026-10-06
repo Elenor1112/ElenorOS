@@ -23,12 +23,13 @@ async function loadAttachment(id: string) {
       brief: { select: { leadId: true } },
       feedback: { select: { leadId: true } },
       proposal: { select: { leadId: true } },
+      request: { select: { leadId: true } },
     },
   });
   if (!row) throw new ApiError(404, "Attachment not found.");
   const leadId =
     row.leadId ?? row.meeting?.leadId ?? row.brief?.leadId ??
-    row.feedback?.leadId ?? row.proposal?.leadId;
+    row.feedback?.leadId ?? row.proposal?.leadId ?? row.request?.leadId;
   // Unreachable while the sales_attachment_one_parent constraint holds; treated
   // as not-found rather than crashing if it somehow does not.
   if (!leadId) throw new ApiError(404, "Attachment is not linked to a lead.");

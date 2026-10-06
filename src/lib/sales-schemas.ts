@@ -365,6 +365,23 @@ export const proposalCreateSchema = z.object({
   isRevision: z.boolean().default(false),
 });
 
+// ─── New request (extra scope on an existing deal) ───────────
+
+export const leadRequestCreateSchema = z
+  .object({
+    leadId: z.string().min(1),
+    services: z.array(z.string().trim().min(1)).min(1, "Pick at least one service").max(30),
+    servicesOther: optionalText,
+    details: optionalText,
+    amount: z.number().positive("Amount must be greater than 0").max(1e10),
+    currency: z.string().trim().min(1).max(8).default("EGP"),
+    poNumber: optionalText,
+  })
+  .refine((d) => !d.services.includes("Others") || Boolean(d.servicesOther), {
+    message: "Describe the other service",
+    path: ["servicesOther"],
+  });
+
 export const proposalPatchSchema = proposalCreateSchema
   .omit({ leadId: true, isRevision: true })
   .partial()

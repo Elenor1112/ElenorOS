@@ -16,7 +16,7 @@ import { leadVisibilityFilter, assertCanEditLead, logSalesActivity, SALES_ACTIVI
 const MAX_BYTES = 10 * 1024 * 1024;
 
 /** Exactly one of these identifies the parent. */
-const PARENTS = ["leadId", "meetingId", "briefId", "feedbackId", "proposalId"] as const;
+const PARENTS = ["leadId", "meetingId", "briefId", "feedbackId", "proposalId", "requestId"] as const;
 type ParentKey = (typeof PARENTS)[number];
 
 export async function POST(req: NextRequest) {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const isVoiceNote = form.get("isVoiceNote") === "1";
 
     // Resolve the owning lead so permissions are checked against ONE rule, no
-    // matter which of the five objects the file is being attached to.
+    // matter which of the six objects the file is being attached to.
     const leadId = await resolveLeadId(parentKey, parentId);
     const lead = await db.lead.findFirst({
       where: { id: leadId, ...leadVisibilityFilter(user) },
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 /**
  * Which lead an attachment ultimately belongs to.
  *
- * Every sales object hangs off a lead, so this collapses the five parent types
+ * Every sales object hangs off a lead, so this collapses the six parent types
  * down to the single permission check above.
  */
 async function resolveLeadId(parentKey: ParentKey, parentId: string): Promise<string> {
@@ -113,6 +113,11 @@ async function resolveLeadId(parentKey: ParentKey, parentId: string): Promise<st
     case "proposalId": {
       const row = await db.proposal.findUnique({ where: { id: parentId }, select: { leadId: true } });
       if (!row) throw new ApiError(404, "Proposal not found.");
+      return row.leadId;
+    }
+    case "requestId": {
+      const row = await db.leadRequest.findUnique({ where: { id: parentId }, select: { leadId: true } });
+      if (!row) throw new ApiError(404, "Request not found.");
       return row.leadId;
     }
   }

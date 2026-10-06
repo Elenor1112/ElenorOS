@@ -1,51 +1,53 @@
 # Graph Report - Tasks System la finalizma  (2026-10-06)
 
 ## Corpus Check
-- 267 files · ~168,282 words
+- 270 files · ~170,071 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1448 nodes · 5259 edges · 69 communities (52 shown, 17 thin omitted)
+- 1459 nodes · 5340 edges · 70 communities (51 shown, 19 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4ce1bd61`
+- Built from commit: `73da5338`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - toErrorResponse
-- task-bits.tsx
-- job-description/route.ts
-- ApiError
-- apiSend
 - cn
+- job-description/route.ts
+- sales.ts
+- api.ts
+- apiSend
 - page-header.tsx
 - command-palette.tsx
-- lead-tabs.tsx
-- sales-bits.tsx
-- db
+- apiGet
+- sales-constants.ts
+- notify.ts
 - dependencies
-- team-performance.tsx
-- utils.ts
+- sales-bits.tsx
+- fetcher.ts
 - sales-schemas.ts
 - rbac.ts
-- sales.ts
+- reports/tasks/route.ts
 - compilerOptions
 - auth.ts
 - requireUser
 - scripts
 - devDependencies
 - Extraction Subagent Prompt
-- apiGet
+- employee-profile.tsx
 - Effective Permissions Formula
-- push.ts
+- getSessionUser
 - (app)/reports/reports-client.tsx
 - Tasks API Endpoints
 - applySqlFile
 - graphify Pipeline
 - Part B Semantic Extraction
+- analytics/page.tsx
+- audit/page.tsx
 - Graphify Query Traversal Flow
 - ASSIGNMENT_MATRIX
 - middleware.ts
@@ -58,7 +60,7 @@
 - package.json
 - backfill-timezone.ts
 - normalize-deadlines.ts
-- can
+- ideas/[id]/route.ts
 - save-result Feedback Loop
 - Step 2 Detect Files
 - backfill-task-workers.ts
@@ -67,9 +69,8 @@
 - EOTM & Analytics Endpoints
 - update-working-hours.ts
 - Notification Polling (WebSocket-ready)
-- eotm.ts
 - next.config.mjs
-- db.ts
+- sales/attachments/[id]/route.ts
 - bcryptjs
 - cmdk
 - date-fns
@@ -84,16 +85,16 @@
 - zod
 
 ## God Nodes (most connected - your core abstractions)
-1. `toErrorResponse()` - 198 edges
-2. `requireUser()` - 172 edges
-3. `audit()` - 107 edges
-4. `db` - 89 edges
+1. `toErrorResponse()` - 202 edges
+2. `requireUser()` - 176 edges
+3. `audit()` - 111 edges
+4. `db` - 91 edges
 5. `apiGet()` - 85 edges
-6. `apiSend()` - 82 edges
+6. `apiSend()` - 85 edges
 7. `can()` - 63 edges
 8. `cn()` - 61 edges
-9. `ApiError` - 56 edges
-10. `useCan()` - 55 edges
+9. `ApiError` - 58 edges
+10. `useCan()` - 56 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `AuditLog model` --semantically_similar_to--> `Graphify Knowledge Graph Workflow`  [AMBIGUOUS] [semantically similar]
@@ -118,87 +119,87 @@
 - **Graph Integrity and Data-Loss Guards** — _claude_skills_graphify_skill_empty_graph_guard, _claude_skills_graphify_skill_shrink_guard, _claude_skills_graphify_skill_graph_health_check, _claude_skills_graphify_skill_manifest_stamping, _claude_skills_graphify_references_update_prune_sources, _claude_skills_graphify_references_extraction_spec_source_file_rule [INFERRED 0.85]
 - **Incremental Rebuild Trigger Mechanisms** — _claude_skills_graphify_references_update_incremental_update, _claude_skills_graphify_references_add_watch_watch_mode, _claude_skills_graphify_references_hooks_post_commit_hook, _claude_skills_graphify_references_update_code_only_shortcut, _claude_skills_graphify_references_add_watch_graphify_add [INFERRED 0.85]
 
-## Communities (69 total, 17 thin omitted)
+## Communities (70 total, 19 thin omitted)
 
 ### Community 0 - "toErrorResponse"
 Cohesion: 0.08
-Nodes (52): GET(), DELETE(), GET(), PATCH(), updateSchema, GET(), POST(), schema (+44 more)
+Nodes (49): GET(), POST(), schema, DELETE(), GET(), PATCH(), updateSchema, GET() (+41 more)
 
-### Community 1 - "task-bits.tsx"
-Cohesion: 0.13
-Nodes (27): DashboardClient(), TeamRoster(), axisStyle, DeptBar(), StatusDonut(), TrendArea(), CalendarView(), ListView() (+19 more)
+### Community 1 - "cn"
+Cohesion: 0.07
+Nodes (52): DashboardClient(), TeamRoster(), axisStyle, DeptBar(), StatusDonut(), TrendArea(), MiniTable(), CalendarView() (+44 more)
 
 ### Community 2 - "job-description/route.ts"
 Cohesion: 0.13
 Nodes (24): DELETE(), GET(), loadEmployee(), POST(), createSchema, GET(), POST(), GET() (+16 more)
 
-### Community 3 - "ApiError"
+### Community 3 - "sales.ts"
+Cohesion: 0.07
+Nodes (75): GET(), userPick, ParentKey, PARENTS, POST(), resolveLeadId(), GET(), userPick (+67 more)
+
+### Community 4 - "api.ts"
+Cohesion: 0.15
+Nodes (19): GET(), GET(), POST(), schema, GET(), POST(), schema, GET() (+11 more)
+
+### Community 5 - "apiSend"
 Cohesion: 0.09
-Nodes (61): GET(), userPick, ParentKey, PARENTS, POST(), resolveLeadId(), GET(), userPick (+53 more)
-
-### Community 4 - "apiSend"
-Cohesion: 0.06
-Nodes (45): ApprovalsClient(), ApprovalsData, EditClientDialog(), EditDepartmentDialog(), CreateEmployeeDialog(), FormValues, schema, AchievementsTab() (+37 more)
-
-### Community 5 - "cn"
-Cohesion: 0.35
-Nodes (9): ChangePasswordCard(), PASSWORD_RULES, ResignDialog(), CardContent, CardDescription, CardFooter, CardHeader, CardTitle (+1 more)
+Nodes (42): ClientsClient(), EditClientDialog(), DepartmentsClient(), EditDepartmentDialog(), OverrideDialog(), WeightsDialog(), LeaveForm(), PermissionsClient() (+34 more)
 
 ### Community 6 - "page-header.tsx"
-Cohesion: 0.05
-Nodes (8): AnalyticsClient(), AuditClient(), colorFor(), ProjectDetail(), PageContainer(), PageHeader(), TaskDetail(), TasksWorkspace()
+Cohesion: 0.07
+Nodes (3): ProjectDetail(), PageContainer(), PageHeader()
 
 ### Community 7 - "command-palette.tsx"
-Cohesion: 0.07
-Nodes (31): SettingsClient(), inter, metadata, Providers(), useCanSeeSalesModule(), ACTIONS, CommandPalette(), HIT_META (+23 more)
+Cohesion: 0.05
+Nodes (41): db, main(), seedPolicies(), db, AppLayout(), SettingsClient(), inter, metadata (+33 more)
 
-### Community 8 - "lead-tabs.tsx"
-Cohesion: 0.12
-Nodes (38): ActivitiesClient(), DiscoveryClient(), FeedbackClient(), LeadDetailClient(), Tab, TAB_SLUG, tabCount(), TABS (+30 more)
-
-### Community 9 - "sales-bits.tsx"
+### Community 8 - "apiGet"
 Cohesion: 0.10
-Nodes (44): ActivityRow, ClientRow, BriefRow, FeedbackRow, ConvertIdeaDialog(), IdeaDialog(), IdeaRow, IdeasClient() (+36 more)
+Nodes (51): EmployeesClient(), PickAnyDialog(), ActivitiesClient(), BriefRow, DiscoveryClient(), FeedbackClient(), IdeasClient(), LeadDetailClient() (+43 more)
 
-### Community 10 - "db"
+### Community 9 - "sales-constants.ts"
 Cohesion: 0.11
-Nodes (34): GET(), PATCH(), schema, POST(), schema, PATCH(), schema, POST() (+26 more)
+Nodes (25): FeedbackRow, MeetingRow, AttachmentParent, AttachmentsPanel(), formatBytes(), SalesAttachment, Brief, FeedbackDialog() (+17 more)
+
+### Community 10 - "notify.ts"
+Cohesion: 0.12
+Nodes (26): GET(), PATCH(), schema, PATCH(), schema, GET(), POST(), GET() (+18 more)
 
 ### Community 11 - "dependencies"
 Cohesion: 0.07
 Nodes (29): @auth/prisma-adapter, class-variance-authority, clsx, framer-motion, @hookform/resolvers, jose, lucide-react, dependencies (+21 more)
 
-### Community 12 - "team-performance.tsx"
-Cohesion: 0.07
-Nodes (37): SalesClientsClient(), LeadDetailCard(), LeadTable(), LeadRef, MyDashboard, MyDashboardClient(), EXPORTS, PipelineReports() (+29 more)
+### Community 12 - "sales-bits.tsx"
+Cohesion: 0.06
+Nodes (62): ACTION_COLOR, PoliciesClient(), ActivityRow, ClientRow, SalesClientsClient(), LeadDetailCard(), LeadTable(), View (+54 more)
 
-### Community 13 - "utils.ts"
-Cohesion: 0.11
-Nodes (47): CLIENT_CONTACT_FIELDS, CLIENT_FIELDS, STATUS, COLORS, Dept, COMPONENTS, Perm, TYPE_LABELS (+39 more)
+### Community 13 - "fetcher.ts"
+Cohesion: 0.10
+Nodes (45): CLIENT_CONTACT_FIELDS, CLIENT_FIELDS, STATUS, COLORS, Dept, CreateEmployeeDialog(), FormValues, schema (+37 more)
 
 ### Community 14 - "sales-schemas.ts"
-Cohesion: 0.06
-Nodes (36): briefSchema, commentSchema, COMPANY_SIZES, convertSchema, DECISION_TIMELINES, factor5, feedbackPatchSchema, feedbackSchema (+28 more)
+Cohesion: 0.05
+Nodes (38): briefSchema, commentSchema, COMPANY_SIZES, convertSchema, DECISION_TIMELINES, factor5, feedbackPatchSchema, feedbackSchema (+30 more)
 
 ### Community 15 - "rbac.ts"
-Cohesion: 0.06
-Nodes (75): db, main(), seedPolicies(), db, GET(), decisionSchema, POST(), PATCH() (+67 more)
+Cohesion: 0.05
+Nodes (91): GET(), POST(), GET(), SearchHit, PATCH(), taskInclude, updateSchema, addDaysKey() (+83 more)
 
-### Community 16 - "sales.ts"
-Cohesion: 0.07
-Nodes (67): RFC-4180, GET(), daysBetween(), deliveredAt(), effectiveDeadline(), GET(), OPEN, rate() (+59 more)
+### Community 16 - "reports/tasks/route.ts"
+Cohesion: 0.08
+Nodes (50): RFC-4180, GET(), daysBetween(), deliveredAt(), effectiveDeadline(), GET(), OPEN, rate() (+42 more)
 
 ### Community 17 - "compilerOptions"
 Cohesion: 0.07
 Nodes (26): dom, dom.iterable, esnext, next-env.d.ts, .next/types/**/*.ts, node_modules, **/*.ts, **/*.tsx (+18 more)
 
 ### Community 18 - "auth.ts"
-Cohesion: 0.11
-Nodes (30): POST(), schema, POST(), schema, POST(), GET(), POST(), GET() (+22 more)
+Cohesion: 0.21
+Nodes (16): POST(), schema, POST(), POST(), GET(), ACCESS_MAX_AGE, ACCESS_SECRET, clearAuthCookies() (+8 more)
 
 ### Community 19 - "requireUser"
-Cohesion: 0.10
-Nodes (31): GET(), DELETE(), PATCH(), schema, POST(), GET(), GET(), GET() (+23 more)
+Cohesion: 0.07
+Nodes (49): GET(), POST(), DELETE(), PATCH(), schema, POST(), GET(), POST() (+41 more)
 
 ### Community 20 - "scripts"
 Cohesion: 0.12
@@ -212,21 +213,21 @@ Nodes (29): autoprefixer, eslint, eslint-config-next, devDependencies, autoprefi
 Cohesion: 0.18
 Nodes (14): Discrete Confidence Score Rubric, DEEP_MODE Aggressive Inference, Extraction Subagent Prompt, Hyperedge Extraction Rule, Node ID Format Rule, semantically_similar_to Edge Rule, Verbatim source_file Rule, build_merge Replace-on-Re-extract (+6 more)
 
-### Community 23 - "apiGet"
-Cohesion: 0.07
-Nodes (36): ACTION_COLOR, ClientsClient(), DepartmentsClient(), Dept, Employee, EmployeesClient(), EmployeeProfile(), EotmClient() (+28 more)
+### Community 23 - "employee-profile.tsx"
+Cohesion: 0.06
+Nodes (31): ApprovalsClient(), ApprovalsData, AchievementsTab(), DeactivateDialog(), EditEmployeeDialog(), Employee, EmployeeProfile(), OverviewTab() (+23 more)
 
 ### Community 24 - "Effective Permissions Formula"
 Cohesion: 0.20
 Nodes (12): Auth Endpoints (login, logout, refresh, me), Authentication Flow (JWT + Rotating Refresh), getSessionUser(), State Management (TanStack Query + Session Context), Identity, Org & RBAC Domain, RefreshToken model, UserPermission override (ALLOW/DENY), Soft Deletes (deactivate, revoke tokens) (+4 more)
 
-### Community 25 - "push.ts"
-Cohesion: 0.36
-Nodes (6): GET(), POST(), ensureConfigured(), pushConfigured(), PushPayload, sendPushToUsers()
+### Community 25 - "getSessionUser"
+Cohesion: 0.29
+Nodes (6): GET(), DashboardPage(), SalesDashboardPage(), Home(), getSessionUser(), verifyAccessToken()
 
 ### Community 26 - "(app)/reports/reports-client.tsx"
-Cohesion: 0.06
-Nodes (39): COLUMNS, detectPreset(), PersonRow, Preset, PRESET_LABEL, presetRange(), PRESETS, Report() (+31 more)
+Cohesion: 0.11
+Nodes (20): COLUMNS, detectPreset(), PersonRow, Preset, PRESET_LABEL, presetRange(), PRESETS, Report() (+12 more)
 
 ### Community 27 - "Tasks API Endpoints"
 Cohesion: 0.22
@@ -273,8 +274,8 @@ Cohesion: 0.29
 Nodes (7): Production Hardening Checklist, Serverless DB Retry-with-Backoff, Vercel + Neon Deployment, RBAC & Authorization Model, Role Hierarchy (levels 0-4), NPM Scripts (db:push, db:seed, db:migrate), Seeded Local Development Accounts
 
 ### Community 41 - "avatar/route.ts"
-Cohesion: 0.27
-Nodes (11): DELETE(), GET(), POST(), requireAvatarAccess(), ACCEPTED_AVATAR_TYPES, readAvatarField(), removeAvatar(), saveAvatar() (+3 more)
+Cohesion: 0.30
+Nodes (10): DELETE(), POST(), requireAvatarAccess(), ACCEPTED_AVATAR_TYPES, readAvatarField(), removeAvatar(), saveAvatar(), sha256() (+2 more)
 
 ### Community 42 - "Step 4 Build Cluster Analyze"
 Cohesion: 0.47
@@ -292,9 +293,9 @@ Nodes (5): APPLY, corrected(), db, main(), TARGETS
 Cohesion: 0.47
 Nodes (5): APPLY, db, isUtcMidnight(), main(), toLocalMidnight()
 
-### Community 47 - "can"
-Cohesion: 0.14
-Nodes (25): DELETE(), loadIdea(), PATCH(), POST(), userPick, GET(), GET(), SearchHit (+17 more)
+### Community 47 - "ideas/[id]/route.ts"
+Cohesion: 0.38
+Nodes (6): DELETE(), loadIdea(), PATCH(), userPick, ideaConvertSchema, ideaPatchSchema
 
 ### Community 48 - "save-result Feedback Loop"
 Cohesion: 0.50
@@ -312,37 +313,33 @@ Nodes (4): Notification Badge Icon (72px), Monochrome Silhouette Badge Mark, Not
 Cohesion: 0.67
 Nodes (3): EOTM & Analytics Endpoints, EOTM Models (EotmConfig, EotmScore, EotmWinner), Bounded Concurrency for EOTM Aggregation
 
-### Community 58 - "eotm.ts"
-Cohesion: 0.40
-Nodes (7): GET(), computeScores(), currentPeriod(), getConfig(), recomputeAndStore(), ScoreBreakdown, deadlineDueBy()
-
-### Community 62 - "db.ts"
-Cohesion: 0.16
-Nodes (11): POST(), schema, POST(), schema, DELETE(), GET(), loadAttachment(), requireVisibleParent() (+3 more)
+### Community 62 - "sales/attachments/[id]/route.ts"
+Cohesion: 0.60
+Nodes (5): DELETE(), GET(), loadAttachment(), requireVisibleParent(), RFC-5987
 
 ## Ambiguous Edges - Review These
 - `AuditLog model` → `Graphify Knowledge Graph Workflow`  [AMBIGUOUS]
   CLAUDE.md · relation: semantically_similar_to
 
 ## Knowledge Gaps
-- **331 isolated node(s):** `nextConfig`, `name`, `version`, `private`, `dev` (+326 more)
+- **334 isolated node(s):** `nextConfig`, `name`, `version`, `private`, `dev` (+329 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `AuditLog model` and `Graphify Knowledge Graph Workflow`?**
   _Edge tagged AMBIGUOUS (relation: semantically_similar_to) - confidence is low._
-- **Why does `toErrorResponse()` connect `toErrorResponse` to `job-description/route.ts`, `ApiError`, `avatar/route.ts`, `db`, `rbac.ts`, `sales.ts`, `can`, `auth.ts`, `requireUser`, `push.ts`, `eotm.ts`, `db.ts`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **Why does `requireUser()` connect `requireUser` to `toErrorResponse`, `job-description/route.ts`, `ApiError`, `avatar/route.ts`, `db`, `rbac.ts`, `sales.ts`, `can`, `auth.ts`, `push.ts`, `eotm.ts`, `db.ts`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
-- **Why does `db` connect `db` to `toErrorResponse`, `job-description/route.ts`, `ApiError`, `page-header.tsx`, `avatar/route.ts`, `rbac.ts`, `sales.ts`, `can`, `auth.ts`, `requireUser`, `push.ts`, `eotm.ts`, `db.ts`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `toErrorResponse()` connect `toErrorResponse` to `job-description/route.ts`, `sales.ts`, `api.ts`, `avatar/route.ts`, `notify.ts`, `rbac.ts`, `reports/tasks/route.ts`, `ideas/[id]/route.ts`, `requireUser`, `sales/attachments/[id]/route.ts`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Why does `requireUser()` connect `requireUser` to `toErrorResponse`, `job-description/route.ts`, `sales.ts`, `api.ts`, `avatar/route.ts`, `notify.ts`, `rbac.ts`, `reports/tasks/route.ts`, `ideas/[id]/route.ts`, `getSessionUser`, `sales/attachments/[id]/route.ts`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `apiGet()` connect `apiGet` to `audit/page.tsx`, `cn`, `apiSend`, `command-palette.tsx`, `sales-constants.ts`, `sales-bits.tsx`, `fetcher.ts`, `rbac.ts`, `employee-profile.tsx`, `(app)/reports/reports-client.tsx`, `analytics/page.tsx`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **What connects `nextConfig`, `name`, `version` to the rest of the system?**
-  _331 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _334 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `toErrorResponse` be split into smaller, more focused modules?**
-  _Cohesion score 0.07867494824016563 - nodes in this community are weakly interconnected._
-- **Should `task-bits.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.12685560053981107 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0819252432155658 - nodes in this community are weakly interconnected._
+- **Should `cn` be split into smaller, more focused modules?**
+  _Cohesion score 0.07372229760289462 - nodes in this community are weakly interconnected._

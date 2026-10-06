@@ -216,6 +216,8 @@ export const SALES_ACTIVITY_META: Record<string, { label: string; icon: string; 
   "proposal.opened": { label: "Proposal opened", icon: "MailOpen", color: "#8B5CF6" },
   "proposal.accepted": { label: "Proposal accepted", icon: "CheckCircle2", color: "#22C55E" },
   "proposal.rejected": { label: "Proposal rejected", icon: "XCircle", color: "#EF4444" },
+  "request.created": { label: "New request", icon: "FilePlus2", color: "#22C55E" },
+  "request.deleted": { label: "Request removed", icon: "FileMinus", color: "#EF4444" },
   "comment.added": { label: "Comment added", icon: "MessageCircle", color: "#64748B" },
   "file.uploaded": { label: "File uploaded", icon: "Paperclip", color: "#64748B" },
   "lead.won": { label: "Deal won", icon: "Trophy", color: "#22C55E" },
