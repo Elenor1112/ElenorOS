@@ -21,11 +21,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar collapsed={collapsed} onToggle={toggle} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    // print:* rules drop the chrome and let the page flow across sheets, so
+    // window.print() yields a clean PDF of just the page content.
+    <div className="flex h-screen overflow-hidden bg-background print:block print:h-auto print:overflow-visible">
+      <div className="contents print:hidden">
+        <Sidebar collapsed={collapsed} onToggle={toggle} />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col print:block">
+        <div className="contents print:hidden">
+          <Topbar />
+        </div>
+        <main className="flex-1 overflow-y-auto print:overflow-visible">{children}</main>
       </div>
       <CommandPalette />
     </div>

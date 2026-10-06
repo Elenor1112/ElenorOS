@@ -18,8 +18,21 @@ import { TableView } from "./table-view";
 import { CalendarView } from "./calendar-view";
 import { TaskDetail } from "./task-detail";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { DatePicker } from "@/components/ui/deadline-picker";
 import { PRIORITY_META } from "@/lib/constants";
 import type { TaskListItem } from "./task-bits";
+
+type DateField = "any" | "deadline" | "created" | "started" | "waiting" | "editing" | "hold" | "approved";
+const DATE_FIELDS: { key: DateField; label: string }[] = [
+  { key: "any", label: "Any Status" },
+  { key: "deadline", label: "Deadline" },
+  { key: "created", label: "Created" },
+  { key: "started", label: "Started" },
+  { key: "waiting", label: "Waiting Approval" },
+  { key: "editing", label: "Editing" },
+  { key: "hold", label: "Hold" },
+  { key: "approved", label: "Approved" },
+];
 
 type View = "kanban" | "list" | "table" | "calendar";
 const VIEWS: { key: View; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -54,9 +67,11 @@ export function TaskBoard({
 
   const [view, setView] = React.useState<View>("kanban");
   const [q, setQ] = React.useState("");
-  const [group, setGroup] = React.useState("");
   const [priority, setPriority] = React.useState("");
   const [client, setClient] = React.useState("");
+  const [dateField, setDateField] = React.useState<DateField>("any");
+  const [from, setFrom] = React.useState("");
+  const [to, setTo] = React.useState("");
   const [createOpen, setCreateOpen] = React.useState(false);
 
   // Client list for the filter. Shares the task-meta cache the create dialog
@@ -77,13 +92,19 @@ export function TaskBoard({
 
   const qp = new URLSearchParams();
   if (q) qp.set("q", q);
-  if (group) qp.set("group", group);
   if (priority) qp.set("priority", priority);
   if (client) qp.set("client", client);
+  // Sent even without dates: on its own the selection filters by status.
+  if (dateField !== "any") qp.set("dateField", dateField);
+  if (from) qp.set("from", from);
+  if (to) qp.set("to", to);
   if (scope === "mine") qp.set("mine", "1");
   if (fixedProjectId) qp.set("project", fixedProjectId);
 
-  const queryKey = ["tasks", scope ?? "all", fixedProjectId ?? "", q, group, priority, client];
+  const queryKey = [
+    "tasks", scope ?? "all", fixedProjectId ?? "", q, priority, client,
+    dateField, from, to,
+  ];
   const { data, isLoading } = useQuery({
     queryKey,
     queryFn: () => apiGet<{ tasks: TaskListItem[] }>(`/api/tasks?${qp.toString()}`),
@@ -114,11 +135,6 @@ export function TaskBoard({
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks…" className="pl-9" />
         </div>
 
-        <Select value={group} onChange={(e) => setGroup(e.target.value)} className="w-32">
-          <option value="">All</option>
-          <option value="open">Open</option>
-          <option value="closed">Closed</option>
-        </Select>
         <Select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-36">
           <option value="">Any priority</option>
           {Object.entries(PRIORITY_META).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
@@ -134,6 +150,14 @@ export function TaskBoard({
             ))}
           </Select>
         )}
+
+        {/* Date range. "Any date" matches a task when any of the dates below
+            falls inside the range; the To day is inclusive. */}
+        <Select value={dateField} onChange={(e) => setDateField(e.target.value as DateField)} className="w-44" aria-label="Filter date by">
+          {DATE_FIELDS.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
+        </Select>
+        <DatePicker value={from} onChange={setFrom} placeholder="From" ariaLabel="From date" />
+        <DatePicker value={to} onChange={setTo} placeholder="To" ariaLabel="To date" />
 
         {can("Task.Create") && (
           <Button onClick={() => setCreateOpen(true)}><Plus className="size-4" /> New task</Button>

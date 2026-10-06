@@ -185,6 +185,72 @@ export function DeadlinePicker({
   );
 }
 
+/**
+ * Date-only picker for filters — same calendar as DeadlinePicker, no time half.
+ *
+ * `value` / `onChange` speak "yyyy-MM-dd"; an empty string means unset. Past
+ * days are always selectable, since a filter legitimately looks backwards.
+ */
+export function DatePicker({
+  value,
+  onChange,
+  placeholder = "Pick date",
+  ariaLabel = "Date",
+  className,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLButtonElement>(null);
+  const selected = parseDateKey(value);
+
+  return (
+    <div className={cn("relative inline-flex items-center", className)}>
+      <button
+        ref={ref}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={selected ? `${ariaLabel}: ${formatDate(selected)}. Change` : `Set ${ariaLabel.toLowerCase()}`}
+        className={cn(
+          "inline-flex h-9 w-full min-w-[8.5rem] items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm shadow-sm transition-colors",
+          "hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          selected && "pr-8",
+          open && "border-primary ring-2 ring-ring"
+        )}
+      >
+        <Calendar className="size-4 shrink-0 text-muted-foreground" />
+        <span className={cn("truncate", !selected && "text-muted-foreground")}>
+          {selected ? formatDate(selected) : placeholder}
+        </span>
+      </button>
+      {selected && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          aria-label={`Clear ${ariaLabel.toLowerCase()}`}
+          className="absolute right-1.5 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
+      )}
+
+      <Popover open={open} onClose={() => setOpen(false)} anchorRef={ref} className="w-[17rem]">
+        <CalendarGrid
+          selected={selected}
+          onSelect={(d) => { onChange(toDateKey(d)); setOpen(false); }}
+          onClear={() => { onChange(""); setOpen(false); }}
+        />
+      </Popover>
+    </div>
+  );
+}
+
 function CalendarGrid({
   selected,
   onSelect,

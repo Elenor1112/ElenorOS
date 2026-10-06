@@ -50,6 +50,9 @@ export const NAV: NavItem[] = [
   { label: "Employees", href: "/employees", icon: "Users", section: "People", permission: "Employee.View" },
   { label: "Departments", href: "/departments", icon: "Network", section: "People", permission: "Department.View" },
   { label: "Performance", href: "/performance", icon: "TrendingUp", section: "People", permission: "Performance.View" },
+  // Gated like My Tasks: everyone gets their own report; Reports.View widens it
+  // to the whole team (enforced by the API).
+  { label: "Task Reports", href: "/reports", icon: "ChartColumnStacked", section: "People", permission: "Task.View" },
   { label: "Employee of the Month", href: "/eotm", icon: "Trophy", section: "People" },
   { label: "Policies", href: "/policies", icon: "BookOpen", section: "People" },
   { label: "Job Description", href: "/job-description", icon: "FileText", section: "People", permission: "JobDescription.ViewOwn" },

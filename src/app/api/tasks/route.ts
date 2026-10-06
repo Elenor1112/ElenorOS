@@ -8,6 +8,7 @@ import {
   isAssignableBy, resolveTaskClientId,
 } from "@/lib/tasks";
 import { notifyMany } from "@/lib/notify";
+import { parseUserDateTime } from "@/lib/timezone";
 import type { Prisma, TaskStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -44,6 +45,62 @@ export async function GET(req: NextRequest) {
           { workers: { some: { userId: user.id } } },
         ],
       });
+    }
+
+    // Date range, in company-zone days. `to` is inclusive, so its bound is the
+    // following midnight, exclusive. Unparseable values are ignored.
+    const dayKey = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+    const fromKey = dayKey(sp.get("from"));
+    const toKey = dayKey(sp.get("to"));
+    const from = fromKey ? parseUserDateTime(fromKey) : null;
+    const toNext = toKey ? parseUserDateTime(addDaysKey(toKey, 1)) : null;
+    if (from || toNext) {
+      const range: { gte?: Date; lt?: Date } = {
+        ...(from ? { gte: from } : {}),
+        ...(toNext ? { lt: toNext } : {}),
+      };
+      // Waiting Approval, Editing and Hold have no stamp column, so they match
+      // on the activity log: any entry into that status within the range, via
+      // a manual status change or the submit / request-changes flow.
+      const enteredStatus = (status: TaskStatus, ...verbs: string[]): Prisma.TaskWhereInput => ({
+        activities: {
+          some: {
+            createdAt: range,
+            OR: [
+              { verb: "changed status", meta: { path: ["to"], equals: status } },
+              ...verbs.map((verb) => ({ verb })),
+            ],
+          },
+        },
+      });
+      const columns = {
+        deadline: { deadline: range },
+        created: { createdAt: range },
+        started: { startedAt: range },
+        waiting: enteredStatus("WAITING_APPROVAL", "submitted for approval"),
+        editing: enteredStatus("EDITING", "requested changes"),
+        hold: enteredStatus("HOLD"),
+        approved: { approvedAt: range },
+      } satisfies Record<string, Prisma.TaskWhereInput>;
+      const field = sp.get("dateField") ?? "any";
+      // Into AND, not the top-level OR, for the same reason as `mine` above.
+      and.push(
+        field in columns
+          ? columns[field as keyof typeof columns]
+          : { OR: Object.values(columns) }
+      );
+    } else {
+      // No dates picked: the same selection filters on where the task is now.
+      const current: Record<string, Prisma.TaskWhereInput> = {
+        deadline: { deadline: { not: null } },
+        started: { status: "IN_PROGRESS" },
+        waiting: { status: "WAITING_APPROVAL" },
+        editing: { status: "EDITING" },
+        hold: { status: "HOLD" },
+        approved: { status: "DONE" },
+      };
+      const key = sp.get("dateField") ?? "";
+      if (Object.hasOwn(current, key)) and.push(current[key]);
     }
 
     const where: Prisma.TaskWhereInput = {
@@ -93,6 +150,17 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     return toErrorResponse(e);
   }
+}
+
+/**
+ * "yyyy-MM-dd" shifted by whole days. Calendar arithmetic on the key itself
+ * (via UTC, which has no DST), so the result is converted to an instant in the
+ * company zone afterwards and a DST change never makes a "day" 23 or 25 hours.
+ */
+function addDaysKey(key: string, days: number) {
+  const d = new Date(`${key}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 const createSchema = z.object({
