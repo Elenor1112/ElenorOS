@@ -1,11 +1,14 @@
 "use client";
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Download, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { apiGet } from "@/lib/fetcher";
 import { useCan } from "@/components/session-context";
 import { TeamPerformance } from "@/components/sales/team-performance";
+import { useSetParams } from "@/components/reports/report-filters";
+import { ActivityReport } from "./activity-report";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,41 +52,50 @@ const EXPORTS = [
   { key: "forecast", label: "Pipeline forecast" },
 ];
 
+const TABS = [
+  { key: "activity", label: "Activity report" },
+  { key: "pipeline", label: "Pipeline reports" },
+  { key: "team", label: "Sales Team Performance" },
+] as const;
+type Tab = (typeof TABS)[number]["key"];
+
 export function ReportsClient() {
   const can = useCan();
+  const params = useSearchParams();
+  const setParams = useSetParams();
   // Lifetime team evaluation is manager territory, so the tab only exists for
   // holders of Sales.ViewTeam — the API enforces the same permission.
   const canViewTeam = can("Sales.ViewTeam");
-  const [tab, setTab] = React.useState<"pipeline" | "team">("pipeline");
+  const tabs = TABS.filter((t) => t.key !== "team" || canViewTeam);
+  // The tab lives in the URL with the activity filters, so a link reopens the same view.
+  const requested = params.get("tab") as Tab | null;
+  const tab: Tab = tabs.some((t) => t.key === requested) ? requested! : "activity";
 
   return (
     <div>
-      {canViewTeam && (
-        <div className="mb-4 flex gap-1 border-b border-border">
-          {([
-            { key: "pipeline", label: "Pipeline reports" },
-            { key: "team", label: "Sales Team Performance" },
-          ] as const).map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`relative px-3 py-2 text-sm font-medium transition-colors ${
-                tab === t.key ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-              {tab === t.key && (
-                <motion.span
-                  layoutId="reports-tab-active"
-                  className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="mb-4 flex gap-1 border-b border-border print:hidden">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setParams({ tab: t.key === "activity" ? null : t.key })}
+            className={`relative px-3 py-2 text-sm font-medium transition-colors ${
+              tab === t.key ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+            {tab === t.key && (
+              <motion.span
+                layoutId="reports-tab-active"
+                className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary"
+              />
+            )}
+          </button>
+        ))}
+      </div>
 
-      {canViewTeam && tab === "team" ? <TeamPerformance /> : <PipelineReports />}
+      {tab === "activity" && <ActivityReport />}
+      {tab === "pipeline" && <PipelineReports />}
+      {tab === "team" && <TeamPerformance />}
     </div>
   );
 }
@@ -298,4 +310,3 @@ function SimpleTable({
   );
 }
 
-export { Download };

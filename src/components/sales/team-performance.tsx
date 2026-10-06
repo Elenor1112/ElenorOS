@@ -1,11 +1,15 @@
 "use client";
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  ArrowUpDown, ArrowLeft, Download, Search, Trophy, ChevronRight,
+  ArrowUpDown, ArrowLeft, Download, Search, Trophy, ChevronRight, MessageSquarePlus,
+  Star, Trash2,
 } from "lucide-react";
-import { apiGet } from "@/lib/fetcher";
+import { apiGet, apiSend } from "@/lib/fetcher";
+import { useCan, useSession } from "@/components/session-context";
+import { MemberFeedbackDialog, RATING_WORDS } from "@/components/sales/member-feedback-dialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -204,17 +208,28 @@ export function TeamPerformance() {
         title="Sales team performance"
         description="Lifetime figures. Click a row for the full profile."
         action={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              // Plain navigation so the browser handles the download and the
-              // session cookie rides along.
-              window.location.href = "/api/sales/team/performance?export=roster";
-            }}
-          >
-            <Download className="size-4" /> Export
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Plain navigation so the browser handles the download and the
+                // session cookie rides along.
+                window.location.href = "/api/sales/team/performance?export=roster";
+              }}
+            >
+              <Download className="size-4" /> Export performance
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.location.href = "/api/sales/team/feedback?export=1";
+              }}
+            >
+              <Download className="size-4" /> Export feedback
+            </Button>
+          </div>
         }
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -399,6 +414,8 @@ type ProfileData = {
 };
 
 function SalespersonProfile({ userId, onBack }: { userId: string; onBack: () => void }) {
+  const can = useCan();
+  const [feedbackOpen, setFeedbackOpen] = React.useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["sales-person-profile", userId],
     queryFn: () => apiGet<ProfileData>(`/api/sales/team/performance?userId=${userId}`),
@@ -447,11 +464,18 @@ function SalespersonProfile({ userId, onBack }: { userId: string; onBack: () => 
             </p>
             <p className="text-xs text-muted-foreground">{person.email}</p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold tabular-nums">
-              {formatMoney(p.revenueClosed)}
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-right">
+              <div className="text-2xl font-bold tabular-nums">
+                {formatMoney(p.revenueClosed)}
+              </div>
+              <div className="text-xs text-muted-foreground">lifetime revenue closed</div>
             </div>
-            <div className="text-xs text-muted-foreground">lifetime revenue closed</div>
+            {can("Sales.ViewTeam") && (
+              <Button size="sm" onClick={() => setFeedbackOpen(true)}>
+                <MessageSquarePlus className="size-4" /> Give feedback
+              </Button>
+            )}
           </div>
         </div>
 
@@ -529,6 +553,8 @@ function SalespersonProfile({ userId, onBack }: { userId: string; onBack: () => 
           />
         </SectionCard>
 
+        <ManagerFeedback userId={userId} />
+
         <SectionCard title="Recent wins" className="lg:col-span-2">
           {data.recentWon.length ? (
             <MiniTable
@@ -549,6 +575,125 @@ function SalespersonProfile({ userId, onBack }: { userId: string; onBack: () => 
           )}
         </SectionCard>
       </div>
+
+      <MemberFeedbackDialog
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        userId={userId}
+        name={`${person.firstName} ${person.lastName}`}
+      />
+    </div>
+  );
+}
+
+type MemberFeedback = {
+  id: string; period: string; rating: number;
+  strengths: string | null; improvements: string | null; actionItems: string | null;
+  createdAt: string;
+  author: { id: string; firstName: string; lastName: string };
+};
+
+/** The manager-only feedback history for one salesperson, newest first. */
+function ManagerFeedback({ userId }: { userId: string }) {
+  const me = useSession();
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["sales-member-feedback", userId],
+    queryFn: () =>
+      apiGet<{ feedback: MemberFeedback[] }>(`/api/sales/team/feedback?userId=${userId}`),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => apiSend(`/api/sales/team/feedback/${id}`, "DELETE"),
+    onSuccess: () => {
+      toast.success("Feedback deleted");
+      qc.invalidateQueries({ queryKey: ["sales-member-feedback", userId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const list = data?.feedback ?? [];
+
+  return (
+    <SectionCard
+      title="Manager feedback"
+      description="Private evaluations, visible to sales managers only."
+      className="lg:col-span-2"
+      action={
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!list.length}
+          onClick={() => {
+            window.location.href = `/api/sales/team/feedback?userId=${userId}&export=1`;
+          }}
+        >
+          <Download className="size-4" /> Export
+        </Button>
+      }
+    >
+      {isLoading ? (
+        <Skeleton className="h-24 rounded-lg" />
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon="MessageSquare"
+          title="No feedback yet"
+          description="Use Give feedback above to record an evaluation."
+        />
+      ) : (
+        <div className="space-y-3">
+          {list.map((f) => (
+            <div key={f.id} className="rounded-lg border border-border p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex items-center gap-0.5" aria-label={`${f.rating} of 5`}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      className={cn(
+                        "size-4",
+                        n <= f.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"
+                      )}
+                    />
+                  ))}
+                </span>
+                <span className="text-sm font-medium">{RATING_WORDS[f.rating - 1]}</span>
+                <Badge>{f.period}</Badge>
+                <span className="flex-1" />
+                <span className="text-xs text-muted-foreground">
+                  {f.author.firstName} {f.author.lastName} · {formatDate(f.createdAt)}
+                </span>
+                {(f.author.id === me.id || me.isSuperAdmin) && (
+                  <button
+                    onClick={() => {
+                      if (confirm("Delete this feedback?")) remove.mutate(f.id);
+                    }}
+                    className="text-muted-foreground transition-colors hover:text-destructive"
+                    aria-label="Delete feedback"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                <FeedbackBlock label="Strengths" text={f.strengths} />
+                <FeedbackBlock label="Areas to improve" text={f.improvements} />
+                <FeedbackBlock label="Action items" text={f.actionItems} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function FeedbackBlock({ label, text }: { label: string; text: string | null }) {
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <p className="mt-1 whitespace-pre-wrap">{text || "—"}</p>
     </div>
   );
 }

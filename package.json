@@ -18,6 +18,7 @@
     "db:sync-client-hierarchy": "tsx prisma/sync-client-hierarchy.ts --apply",
     "db:backfill-workers": "tsx prisma/backfill-task-workers.ts --apply",
     "db:sync-triggers": "tsx prisma/sync-triggers.ts",
+    "db:unbump-request-values": "tsx prisma/unbump-request-values.ts",
     "db:studio": "prisma studio"
   },
   "prisma": {

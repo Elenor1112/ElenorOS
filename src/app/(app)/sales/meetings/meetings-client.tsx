@@ -46,7 +46,7 @@ export function MeetingsClient() {
 
   const [q, setQ] = React.useState("");
   const [range, setRange] = React.useState(params.get("range") ?? "upcoming");
-  const [status, setStatus] = React.useState("");
+  const [status, setStatus] = React.useState(params.get("status") ?? "");
   const [open, setOpen] = React.useState(params.get("new") === "1");
   const [editing, setEditing] = React.useState<MeetingRow | null>(null);
   const [deleting, setDeleting] = React.useState<MeetingRow | null>(null);

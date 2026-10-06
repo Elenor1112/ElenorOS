@@ -22,6 +22,27 @@ export const DELIVERY_SERIES = [
   { key: "openOverdue", name: "Open overdue", color: STATUS.warning },
 ] as const;
 
+export const SALES_ACTIVITY_SERIES = [
+  { key: "leadsCreated", name: "Leads created", color: CATEGORICAL[0] },
+  { key: "meetingsHeld", name: "Meetings held", color: CATEGORICAL[1] },
+  { key: "briefsSubmitted", name: "Briefs submitted", color: CATEGORICAL[2] },
+  { key: "proposalsSent", name: "Proposals sent", color: CATEGORICAL[3] },
+] as const;
+
+export const SALES_OUTCOME_SERIES = [
+  { key: "won", name: "Won", color: STATUS.good },
+  { key: "lost", name: "Lost", color: STATUS.critical },
+  { key: "overdueFollowUps", name: "Overdue follow-ups", color: STATUS.warning },
+  { key: "staleLeads", name: "Stale leads", color: STATUS.neutral },
+] as const;
+
+export const SALES_TREND_SERIES = [
+  { key: "leadsCreated", name: "Leads created", color: CATEGORICAL[0] },
+  { key: "meetingsHeld", name: "Meetings held", color: CATEGORICAL[1] },
+  { key: "proposalsSent", name: "Proposals sent", color: CATEGORICAL[3] },
+  { key: "won", name: "Deals won", color: STATUS.good },
+] as const;
+
 function TooltipBox({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -77,10 +98,21 @@ export function PeopleStackedBar<T extends { name: string }>({
   );
 }
 
-export function OnTimeDonut({ onTime, late, rate }: { onTime: number; late: number; rate: number | null }) {
+/** Two-slice donut with the rate in the middle. */
+export function RateDonut({
+  good,
+  bad,
+  rate,
+  caption,
+}: {
+  good: { name: string; value: number };
+  bad: { name: string; value: number };
+  rate: number | null;
+  caption: string;
+}) {
   const data = [
-    { name: "On time", value: onTime, color: STATUS.good },
-    { name: "Late", value: late, color: STATUS.critical },
+    { ...good, color: STATUS.good },
+    { ...bad, color: STATUS.critical },
   ];
   return (
     <div className="relative">
@@ -95,9 +127,20 @@ export function OnTimeDonut({ onTime, late, rate }: { onTime: number; late: numb
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[196px] flex-col items-center justify-center">
         <span className="text-2xl font-bold">{rate === null ? "—" : `${rate}%`}</span>
-        <span className="text-xs text-muted-foreground">on time</span>
+        <span className="text-xs text-muted-foreground">{caption}</span>
       </div>
     </div>
+  );
+}
+
+export function OnTimeDonut({ onTime, late, rate }: { onTime: number; late: number; rate: number | null }) {
+  return (
+    <RateDonut
+      good={{ name: "On time", value: onTime }}
+      bad={{ name: "Late", value: late }}
+      rate={rate}
+      caption="on time"
+    />
   );
 }
 
@@ -112,6 +155,30 @@ export function DoneTrend({ data }: { data: { label: string; done: number; late:
         <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
         <Line name="Done" type="monotone" dataKey="done" stroke={CATEGORICAL[0]} strokeWidth={2} dot={false} isAnimationActive={false} />
         <Line name="Late" type="monotone" dataKey="late" stroke={STATUS.critical} strokeWidth={2} dot={false} isAnimationActive={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** One line per series over labelled time buckets. */
+export function MultiTrend<T extends { label: string }>({
+  data,
+  series,
+}: {
+  data: T[];
+  series: readonly { key: string; name: string; color: string }[];
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke={gridStroke} strokeDasharray="3 3" />
+        <XAxis dataKey="label" tick={axisStyle} axisLine={false} tickLine={false} minTickGap={16} />
+        <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={36} allowDecimals={false} />
+        <Tooltip content={<TooltipBox />} />
+        <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+        {series.map((s) => (
+          <Line key={s.key} name={s.name} type="monotone" dataKey={s.key} stroke={s.color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        ))}
       </LineChart>
     </ResponsiveContainer>
   );

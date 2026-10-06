@@ -835,9 +835,10 @@ export function NewRequestTab({ lead, readOnly }: { lead: LeadDetail; readOnly?:
   const remove = useMutation({
     mutationFn: (requestId: string) => apiSend(`/api/sales/requests/${requestId}`, "DELETE"),
     onSuccess: () => {
-      toast.success("Request deleted — deal value updated");
+      toast.success("Request deleted");
       qc.invalidateQueries({ queryKey: LEAD_KEY(lead.id) });
       qc.invalidateQueries({ queryKey: ["sales-leads"] });
+      qc.invalidateQueries({ queryKey: ["sales-clients"] });
       qc.invalidateQueries({ queryKey: ["sales-dashboard"] });
       setDeleting(null);
     },
@@ -861,7 +862,7 @@ export function NewRequestTab({ lead, readOnly }: { lead: LeadDetail; readOnly?:
                 <span className="font-semibold text-foreground">
                   {Object.entries(totals).map(([cur, v]) => formatMoney(v, cur)).join(" + ")}
                 </span>{" "}
-                added to deal value
+                in separate client entries
               </>
             )}
           </div>
@@ -877,7 +878,7 @@ export function NewRequestTab({ lead, readOnly }: { lead: LeadDetail; readOnly?:
         <EmptyState
           icon="FilePlus2"
           title="No requests yet"
-          description="Log extra services the client asks for. Each request's amount is added to the deal value."
+          description="Log extra services the client asks for. Each request becomes its own entry in Clients with its own value."
         />
       ) : (
         lead.requests.map((r) => (

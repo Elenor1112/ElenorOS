@@ -20,16 +20,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (!request) throw new ApiError(404, "Request not found.");
     assertCanEditLead(user, request.lead, "Sales.LeadEdit");
 
-    // Reverse the deal-value bump made on create, in the same write as the
-    // delete. Clamped at 0 in case the estimate was edited down meanwhile.
+    // Requests never touch the lead's deal value, so deleting one is just the delete.
     const amount = Number(request.amount);
-    await db.$transaction([
-      db.leadRequest.delete({ where: { id } }),
-      db.$executeRaw`
-        UPDATE "Lead"
-        SET "estimatedValue" = GREATEST(COALESCE("estimatedValue", 0) - ${amount}::numeric, 0), "updatedAt" = NOW()
-        WHERE "id" = ${request.leadId}`,
-    ]);
+    await db.leadRequest.delete({ where: { id } });
 
     await logSalesActivity({
       leadId: request.leadId, actorId: user.id, verb: SALES_ACTIVITY.REQUEST_DELETED,

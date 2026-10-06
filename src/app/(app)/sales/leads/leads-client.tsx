@@ -41,7 +41,7 @@ export function LeadsClient() {
   const [q, setQ] = React.useState("");
   // Deep links from the dashboard and command palette seed the filters.
   const [stage, setStage] = React.useState(params.get("stage") ?? "");
-  const [owner, setOwner] = React.useState("");
+  const [owner, setOwner] = React.useState(params.get("owner") ?? "");
   const [priority, setPriority] = React.useState("");
   const [source, setSource] = React.useState("");
   const followupDue = params.get("followup") === "due";

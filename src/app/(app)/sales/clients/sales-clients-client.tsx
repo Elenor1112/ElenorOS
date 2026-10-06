@@ -12,10 +12,14 @@ import { Avatar } from "@/components/ui/avatar";
 import {
   EmptyState, CardGridSkeleton, StatTile, formatDate, type PersonRef,
 } from "@/components/sales/sales-bits";
-import { LEAD_SOURCE_META, formatCompactMoney } from "@/lib/sales-constants";
+import { LEAD_SOURCE_META, formatCompactMoney, formatMoney } from "@/lib/sales-constants";
 import type { LeadSource } from "@prisma/client";
 
 type ClientRow = {
+  /** "request" rows repeat the parent lead's client data with a New Request's own value. */
+  kind: "lead" | "request";
+  requestId?: string; currency?: string; services?: string[];
+  servicesOther?: string | null; details?: string | null; poNumber?: string | null;
   id: string; code: string; companyName: string; brandName: string | null;
   industry: string | null; contactPerson: string | null; email: string | null;
   phone: string | null; estimatedValue: number | null;
@@ -47,8 +51,11 @@ export function SalesClientsClient() {
   });
 
   const clients = data?.clients ?? [];
+  // Request rows repeat their lead's client, so they add value but are not
+  // extra clients or extra projects.
+  const leadRows = clients.filter((c) => c.kind === "lead");
   const totalValue = clients.reduce((s, c) => s + (c.estimatedValue ?? 0), 0);
-  const totalProjects = clients.reduce(
+  const totalProjects = leadRows.reduce(
     (s, c) => s + (c.convertedClient?._count.projects ?? 0),
     0
   );
@@ -56,7 +63,7 @@ export function SalesClientsClient() {
   return (
     <div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Converted clients" value={clients.length} icon="Handshake" color="#22C55E" />
+        <StatTile label="Converted clients" value={leadRows.length} icon="Handshake" color="#22C55E" />
         <StatTile label="Total deal value" value={formatCompactMoney(totalValue)} icon="Wallet" color="#06B6D4" />
         <StatTile label="Projects" value={totalProjects} icon="FolderKanban" color="#8B5CF6" />
         <StatTile
@@ -91,7 +98,7 @@ export function SalesClientsClient() {
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {clients.map((c, i) => (
             <motion.div
-              key={c.id}
+              key={c.requestId ?? c.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(i * 0.03, 0.3) }}
@@ -101,9 +108,14 @@ export function SalesClientsClient() {
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
                     <Building2 className="size-5" />
                   </div>
-                  <Badge color="#22C55E">
-                    {c.convertedClient?.status ?? "ACTIVE"}
-                  </Badge>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {c.kind === "request" && <Badge color="#06B6D4">Request</Badge>}
+                    {(c.kind === "lead" || c.convertedClient) && (
+                      <Badge color="#22C55E">
+                        {c.convertedClient?.status ?? "ACTIVE"}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="mt-3 truncate font-semibold">
@@ -118,24 +130,39 @@ export function SalesClientsClient() {
 
                 <div className="mt-2 flex items-baseline justify-between">
                   <span className="text-base font-bold">
-                    {formatCompactMoney(c.estimatedValue)}
+                    {c.kind === "request"
+                      ? formatMoney(c.estimatedValue ?? 0, c.currency ?? "EGP")
+                      : formatCompactMoney(c.estimatedValue)}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
-                    won {formatDate(c.wonAt)}
+                    {c.kind === "request" ? "added" : "won"} {formatDate(c.wonAt)}
                   </span>
                 </div>
 
-                {/* Sales history is one link away rather than copied here — the
+                {c.kind === "request" ? (
+                  <div className="mt-3">
+                    <div className="flex flex-wrap gap-1.5 text-[10px]">
+                      {c.services?.map((s) => (
+                        <Badge key={s}>{s === "Others" && c.servicesOther ? `Other: ${c.servicesOther}` : s}</Badge>
+                      ))}
+                    </div>
+                    {c.details && (
+                      <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{c.details}</p>
+                    )}
+                  </div>
+                ) : (
+                /* Sales history is one link away rather than copied here — the
                     lead remains the record, which is why conversion links
-                    rather than duplicates. */}
+                    rather than duplicates. */
                 <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
                   {c._count.briefs > 0 && <Badge>{c._count.briefs} brief{c._count.briefs > 1 ? "s" : ""}</Badge>}
                   {c._count.feedback > 0 && <Badge>{c._count.feedback} feedback</Badge>}
                   {c._count.proposals > 0 && <Badge>{c._count.proposals} proposal{c._count.proposals > 1 ? "s" : ""}</Badge>}
                   {c._count.meetings > 0 && <Badge>{c._count.meetings} meeting{c._count.meetings > 1 ? "s" : ""}</Badge>}
                 </div>
+                )}
 
-                {c.convertedClient?.projects.length ? (
+                {c.kind === "lead" && c.convertedClient?.projects.length ? (
                   <div className="mt-3 space-y-1">
                     {c.convertedClient.projects.slice(0, 2).map((p) => (
                       <Link

@@ -193,6 +193,8 @@ model User {
   leadRequestsCreated LeadRequest[]          @relation("LeadRequestCreatedBy")
   proposalEvents      ProposalEvent[]        @relation("ProposalEventActor")
   salesComments       SalesComment[]         @relation("SalesCommentAuthor")
+  salesFeedbackReceived SalesMemberFeedback[] @relation("SalesMemberFeedbackSubject")
+  salesFeedbackGiven    SalesMemberFeedback[] @relation("SalesMemberFeedbackAuthor")
   salesUploads        SalesAttachment[]      @relation("SalesAttachmentUploader")
   salesIdeas          SalesIdea[]            @relation("SalesIdeaOwner")
   salesIdeasCreated   SalesIdea[]            @relation("SalesIdeaCreatedBy")
@@ -1039,6 +1041,26 @@ model PerformanceReview {
   createdAt    DateTime @default(now()) @db.Timestamptz
 
   @@index([subjectId])
+}
+
+/// A sales manager's written evaluation of a salesperson. Deliberately separate
+/// from PerformanceReview, which feeds Employee-of-the-Month scoring — sales
+/// coaching notes must not move those scores. Visible to Sales.ViewTeam only.
+model SalesMemberFeedback {
+  id           String   @id @default(cuid())
+  subject      User     @relation("SalesMemberFeedbackSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId    String
+  author       User     @relation("SalesMemberFeedbackAuthor", fields: [authorId], references: [id])
+  authorId     String
+  period       String // "2026-10"
+  rating       Int // 1-5
+  strengths    String?
+  improvements String?
+  actionItems  String?
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt @db.Timestamptz
+
+  @@index([subjectId, createdAt])
 }
 
 enum WarningLevel {

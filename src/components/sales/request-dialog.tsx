@@ -15,9 +15,10 @@ import { SERVICES_CATALOG } from "@/lib/sales-constants";
 const SERVICE_OPTIONS = [...SERVICES_CATALOG, "Others"] as const;
 
 /**
- * Log a new request on an existing deal. Its amount is added to the lead's
- * deal value server-side; the PO document is attached on the request card
- * afterwards, the same way proposal files are.
+ * Log a new request on an existing deal. It appears as its own entry in Sales >
+ * Clients with its own amount — the lead's original deal value is not touched.
+ * The PO document is attached on the request card afterwards, the same way
+ * proposal files are.
  */
 export function RequestDialog({
   open,
@@ -63,9 +64,10 @@ export function RequestDialog({
         poNumber: v.poNumber || undefined,
       }),
     onSuccess: () => {
-      toast.success("Request added — deal value updated");
+      toast.success("Request added to Clients");
       qc.invalidateQueries({ queryKey: ["sales-lead"] });
       qc.invalidateQueries({ queryKey: ["sales-leads"] });
+      qc.invalidateQueries({ queryKey: ["sales-clients"] });
       qc.invalidateQueries({ queryKey: ["sales-dashboard"] });
       onClose();
     },
@@ -85,7 +87,7 @@ export function RequestDialog({
       open={open}
       onClose={onClose}
       title="New request"
-      description="The amount is added to this lead's total deal value."
+      description="Added as a separate client entry in Sales > Clients. The lead's deal value is not affected."
       className="max-w-xl"
     >
       <form onSubmit={handleSubmit(submit)} className="space-y-4">

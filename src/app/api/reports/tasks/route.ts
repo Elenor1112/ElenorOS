@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireUser, toErrorResponse, ApiError } from "@/lib/api";
+import { requireUser, toErrorResponse } from "@/lib/api";
 import { can, REPORT_TEAM_ROLES } from "@/lib/rbac";
 import { tableResponse, type Table } from "@/lib/export";
 import { fullName } from "@/lib/utils";
-import { companyToday, isDateOnly, requireUserDateTime, zonedParts } from "@/lib/timezone";
+import { isDateOnly, requireUserDateTime } from "@/lib/timezone";
+import { parseReportRange, shiftYmd, ymdOf } from "@/lib/report-range";
 import type { Prisma, RoleKey, TaskStatus } from "@prisma/client";
 
 /**
@@ -30,30 +31,6 @@ import type { Prisma, RoleKey, TaskStatus } from "@prisma/client";
  */
 
 const OPEN: TaskStatus[] = ["TODO", "IN_PROGRESS", "HOLD", "WAITING_APPROVAL", "EDITING"];
-const YMD = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_RANGE_DAYS = 366;
-
-function shiftYmd(ymd: string, days: number): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
-}
-
-function ymdOf(instant: Date): string {
-  const p = zonedParts(instant);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${p.year}-${pad(p.month)}-${pad(p.day)}`;
-}
-
-function daysBetween(a: string, b: string): number {
-  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
-}
-
-/** Week buckets start on Sunday, the first day of the office week. */
-function weekStart(ymd: string): string {
-  const dow = new Date(`${ymd}T00:00:00Z`).getUTCDay();
-  return shiftYmd(ymd, -dow);
-}
-
 /**
  * A date-only deadline stores company-zone midnight and means "end of that
  * day" — the same rule the analytics overview applies to "overdue".
@@ -97,17 +74,8 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
 
     // ── Range ──
-    const today = companyToday();
-    const to = sp.get("to") ?? today;
-    const from = sp.get("from") ?? `${today.slice(0, 8)}01`;
-    if (!YMD.test(from) || !YMD.test(to)) throw new ApiError(400, "from/to must be yyyy-MM-dd");
-    const span = daysBetween(from, to);
-    if (span < 0) throw new ApiError(400, "from must be on or before to");
-    if (span >= MAX_RANGE_DAYS) throw new ApiError(400, `Range is limited to ${MAX_RANGE_DAYS} days`);
-    const rangeStart = requireUserDateTime(from, "from");
-    const rangeEnd = requireUserDateTime(shiftYmd(to, 1), "to");
-    const inRange = (d: Date) => d >= rangeStart && d < rangeEnd;
-    const bucket: "day" | "week" = span <= 45 ? "day" : "week";
+    const { from, to, start: rangeStart, end: rangeEnd, bucket, inRange, bucketKey, bucketKeys } =
+      parseReportRange(sp);
 
     // ── Who the report covers ──
     // Filters can only narrow within the scope — the user list below is the
@@ -234,8 +202,7 @@ export async function GET(req: NextRequest) {
         totals.done++;
         totals[outcome]++;
 
-        const day = ymdOf(at);
-        const key = bucket === "day" ? day : weekStart(day);
+        const key = bucketKey(at);
         const point = trend.get(key) ?? { done: 0, late: 0 };
         point.done++;
         if (outcome === "late") point.late++;
@@ -278,11 +245,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fill empty buckets so the trend line reads as a timeline, not a scatter.
-    const trendPoints: { key: string; done: number; late: number }[] = [];
-    const step = bucket === "day" ? 1 : 7;
-    for (let k = bucket === "day" ? from : weekStart(from); k <= to; k = shiftYmd(k, step)) {
-      trendPoints.push({ key: k, ...(trend.get(k) ?? { done: 0, late: 0 }) });
-    }
+    const trendPoints = bucketKeys().map((k) => ({ key: k, ...(trend.get(k) ?? { done: 0, late: 0 }) }));
 
     return NextResponse.json({
       range: { from, to, bucket },

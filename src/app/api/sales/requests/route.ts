@@ -25,28 +25,22 @@ export async function POST(req: NextRequest) {
     // "Others" is only meaningful with its description.
     const servicesOther = data.services.includes("Others") ? data.servicesOther : undefined;
 
-    // The request and the deal-value bump are one write: the lead total must
-    // never include a request that does not exist, or miss one that does.
-    // COALESCE so a lead with no estimate yet starts from the request amount.
-    const [request] = await db.$transaction([
-      db.leadRequest.create({
-        data: {
-          leadId: lead.id,
-          services: data.services,
-          servicesOther: servicesOther ?? null,
-          details: data.details ?? null,
-          amount: data.amount,
-          currency: data.currency,
-          poNumber: data.poNumber ?? null,
-          createdById: user.id,
-        },
-        include: { createdBy: userPick },
-      }),
-      db.$executeRaw`
-        UPDATE "Lead"
-        SET "estimatedValue" = COALESCE("estimatedValue", 0) + ${data.amount}::numeric, "updatedAt" = NOW()
-        WHERE "id" = ${lead.id}`,
-    ]);
+    // A request is its own deal: it surfaces as a separate entry in Sales >
+    // Clients carrying its own amount, and leaves the lead's original deal
+    // value untouched.
+    const request = await db.leadRequest.create({
+      data: {
+        leadId: lead.id,
+        services: data.services,
+        servicesOther: servicesOther ?? null,
+        details: data.details ?? null,
+        amount: data.amount,
+        currency: data.currency,
+        poNumber: data.poNumber ?? null,
+        createdById: user.id,
+      },
+      include: { createdBy: userPick },
+    });
 
     const amountLabel = formatMoney(data.amount, data.currency);
     await logSalesActivity({
