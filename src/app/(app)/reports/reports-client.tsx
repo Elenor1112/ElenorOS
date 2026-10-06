@@ -24,7 +24,8 @@ import {
 type PersonRow = {
   userId: string; name: string; roleKey: string; roleName: string;
   created: number; assigned: number; worker: number; total: number;
-  done: number; onTime: number; late: number; noDeadline: number; openOverdue: number;
+  done: number; onTime: number; late: number; noDeadline: number;
+  waitingApproval: number; openOverdue: number;
   onTimeRate: number | null;
 };
 
@@ -229,10 +230,11 @@ function Report({ data, stale }: { data: ReportData; stale: boolean }) {
 
   return (
     <div className={`space-y-4 transition-opacity print:space-y-3 ${stale ? "opacity-60" : ""}`}>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 print:break-inside-avoid">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 print:grid-cols-5 print:break-inside-avoid">
         <StatTile label="Total tasks" value={s.total} hint={`${s.created} created · ${s.assigned} assigned · ${s.worker} worker`} icon="ListChecks" color="#06B6D4" />
         <StatTile label="Done" value={s.done} hint={`${s.noDeadline} without deadline`} icon="CircleCheck" color="#22C55E" />
         <StatTile label="On-time rate" value={s.onTimeRate === null ? "—" : `${s.onTimeRate}%`} hint={`${s.onTime} on time · ${s.late} late`} icon="Timer" color="#8B5CF6" />
+        <StatTile label="Waiting approval" value={s.waitingApproval} hint="Submitted, not yet signed off" icon="Hourglass" color="#0EA5E9" />
         <StatTile label="Open overdue" value={s.openOverdue} hint="Past deadline, not done" icon="AlarmClock" color="#EF4444" />
       </div>
 
@@ -294,6 +296,7 @@ const COLUMNS: ColumnDef<PersonRow>[] = [
   num("done", "Done"),
   num("onTime", "On time"),
   num("late", "Late"),
+  num("waitingApproval", "Waiting approval"),
   num("openOverdue", "Open overdue"),
   {
     ...num("onTimeRate", "On-time %"),

@@ -1,7 +1,7 @@
 # Graph Report - Tasks System la finalizma  (2026-10-06)
 
 ## Corpus Check
-- 267 files · ~168,282 words
+- 267 files · ~168,384 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4ce1bd61`
+- Built from commit: `73da5338`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,7 +19,7 @@
 - task-bits.tsx
 - job-description/route.ts
 - ApiError
-- apiSend
+- fetcher.ts
 - cn
 - page-header.tsx
 - command-palette.tsx
@@ -136,13 +136,13 @@ Nodes (24): DELETE(), GET(), loadEmployee(), POST(), createSchema, GET(), POST()
 Cohesion: 0.09
 Nodes (61): GET(), userPick, ParentKey, PARENTS, POST(), resolveLeadId(), GET(), userPick (+53 more)
 
-### Community 4 - "apiSend"
-Cohesion: 0.06
-Nodes (45): ApprovalsClient(), ApprovalsData, EditClientDialog(), EditDepartmentDialog(), CreateEmployeeDialog(), FormValues, schema, AchievementsTab() (+37 more)
+### Community 4 - "fetcher.ts"
+Cohesion: 0.13
+Nodes (18): CreateEmployeeDialog(), FormValues, schema, Dept, Employee, EmployeesClient(), AvatarPickerButton(), AttachmentParent (+10 more)
 
 ### Community 5 - "cn"
-Cohesion: 0.35
-Nodes (9): ChangePasswordCard(), PASSWORD_RULES, ResignDialog(), CardContent, CardDescription, CardFooter, CardHeader, CardTitle (+1 more)
+Cohesion: 0.15
+Nodes (18): JobDescriptionPanel(), JobDescriptionClient(), PdfViewer(), STATUS_META, Tab, ChangePasswordCard(), PASSWORD_RULES, ResignDialog() (+10 more)
 
 ### Community 6 - "page-header.tsx"
 Cohesion: 0.05
@@ -213,8 +213,8 @@ Cohesion: 0.18
 Nodes (14): Discrete Confidence Score Rubric, DEEP_MODE Aggressive Inference, Extraction Subagent Prompt, Hyperedge Extraction Rule, Node ID Format Rule, semantically_similar_to Edge Rule, Verbatim source_file Rule, build_merge Replace-on-Re-extract (+6 more)
 
 ### Community 23 - "apiGet"
-Cohesion: 0.07
-Nodes (36): ACTION_COLOR, ClientsClient(), DepartmentsClient(), Dept, Employee, EmployeesClient(), EmployeeProfile(), EotmClient() (+28 more)
+Cohesion: 0.05
+Nodes (54): ApprovalsClient(), ApprovalsData, ACTION_COLOR, ClientsClient(), EditClientDialog(), DepartmentsClient(), EditDepartmentDialog(), AchievementsTab() (+46 more)
 
 ### Community 24 - "Effective Permissions Formula"
 Cohesion: 0.20

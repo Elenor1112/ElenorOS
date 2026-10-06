@@ -14,8 +14,11 @@ import type { Prisma, RoleKey, TaskStatus } from "@prisma/client";
  *  - Involvement (created / assigned / worker) counts tasks CREATED in the range.
  *  - Delivery (done / on time / late) counts tasks DELIVERED in the range, so a
  *    task briefed last month and finished this month is this month's delivery.
- *  - Open overdue counts unfinished tasks whose deadline falls in the range and
- *    has already passed.
+ *  - Waiting approval counts tasks SUBMITTED in the range that are still with
+ *    the approver. They are handed in, so they never count as open overdue —
+ *    a slow sign-off is not the doer's lateness.
+ *  - Open overdue counts unfinished, unsubmitted tasks whose deadline falls in
+ *    the range and has already passed.
  *
  * Delivery is credited to the people executing the work — assignees and
  * workers — not the creator, so a manager who briefs forty tasks is not charged
@@ -73,7 +76,8 @@ function deliveredAt(t: { submittedAt: Date | null; approvedAt: Date | null; upd
 type Row = {
   userId: string; name: string; roleKey: RoleKey; roleName: string;
   created: number; assigned: number; worker: number; total: number;
-  done: number; onTime: number; late: number; noDeadline: number; openOverdue: number;
+  done: number; onTime: number; late: number; noDeadline: number;
+  waitingApproval: number; openOverdue: number;
   onTimeRate: number | null;
 };
 
@@ -141,6 +145,7 @@ export async function GET(req: NextRequest) {
                 OR: [
                   { createdAt: range },
                   { status: "DONE", OR: [{ submittedAt: range }, { approvedAt: range }, { updatedAt: range }] },
+                  { status: "WAITING_APPROVAL", submittedAt: range },
                   { status: { in: OPEN }, deadline: range },
                 ],
               },
@@ -160,12 +165,12 @@ export async function GET(req: NextRequest) {
       subjects.map((u) => [u.id, {
         userId: u.id, name: fullName(u), roleKey: u.role.key, roleName: u.role.name,
         created: 0, assigned: 0, worker: 0, total: 0,
-        done: 0, onTime: 0, late: 0, noDeadline: 0, openOverdue: 0, onTimeRate: null,
+        done: 0, onTime: 0, late: 0, noDeadline: 0, waitingApproval: 0, openOverdue: 0, onTimeRate: null,
       }])
     );
 
     // Team totals count each task once, however many subjects share it.
-    const totals = { created: 0, assigned: 0, worker: 0, total: 0, done: 0, onTime: 0, late: 0, noDeadline: 0, openOverdue: 0 };
+    const totals = { created: 0, assigned: 0, worker: 0, total: 0, done: 0, onTime: 0, late: 0, noDeadline: 0, waitingApproval: 0, openOverdue: 0 };
     const trend = new Map<string, { done: number; late: number }>();
 
     for (const t of tasks) {
@@ -207,6 +212,10 @@ export async function GET(req: NextRequest) {
         point.done++;
         if (outcome === "late") point.late++;
         trend.set(key, point);
+      } else if (t.status === "WAITING_APPROVAL") {
+        if (!t.submittedAt || !inRange(t.submittedAt)) continue;
+        for (const id of doers) rows.get(id)!.waitingApproval++;
+        totals.waitingApproval++;
       } else if (OPEN.includes(t.status) && t.deadline && inRange(t.deadline) && due! < now) {
         for (const id of doers) rows.get(id)!.openOverdue++;
         totals.openOverdue++;
@@ -223,16 +232,17 @@ export async function GET(req: NextRequest) {
         name: `task-report ${from} to ${to}`,
         columns: [
           "Name", "Role", "Created", "Assigned", "Worker", "Total",
-          "Done", "On time", "Late", "No deadline", "Open overdue", "On-time %",
+          "Done", "On time", "Late", "Waiting approval", "No deadline", "Open overdue", "On-time %",
         ],
         rows: [
           ...people.map((r) => [
             r.name, r.roleName, r.created, r.assigned, r.worker, r.total,
-            r.done, r.onTime, r.late, r.noDeadline, r.openOverdue, r.onTimeRate ?? "",
+            r.done, r.onTime, r.late, r.waitingApproval, r.noDeadline, r.openOverdue, r.onTimeRate ?? "",
           ]),
           [
             "Total (distinct tasks)", "", summary.created, summary.assigned, summary.worker, summary.total,
-            summary.done, summary.onTime, summary.late, summary.noDeadline, summary.openOverdue, summary.onTimeRate ?? "",
+            summary.done, summary.onTime, summary.late, summary.waitingApproval, summary.noDeadline,
+            summary.openOverdue, summary.onTimeRate ?? "",
           ],
         ],
       };

@@ -17,6 +17,7 @@ export const INVOLVEMENT_SERIES = [
 export const DELIVERY_SERIES = [
   { key: "onTime", name: "On time", color: STATUS.good },
   { key: "late", name: "Late", color: STATUS.critical },
+  { key: "waitingApproval", name: "Waiting approval", color: STATUS.info },
   { key: "noDeadline", name: "No deadline", color: STATUS.neutral },
   { key: "openOverdue", name: "Open overdue", color: STATUS.warning },
 ] as const;
