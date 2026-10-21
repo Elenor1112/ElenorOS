@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import {
   LayoutGrid, List as ListIcon, Table2, Calendar as CalendarIcon,
   Plus, Search, SlidersHorizontal,
@@ -22,9 +23,8 @@ import { DatePicker } from "@/components/ui/deadline-picker";
 import { PRIORITY_META } from "@/lib/constants";
 import type { TaskListItem } from "./task-bits";
 
-type DateField = "any" | "deadline" | "created" | "started" | "waiting" | "editing" | "hold" | "approved";
+type DateField = "deadline" | "created" | "started" | "waiting" | "editing" | "hold" | "approved";
 const DATE_FIELDS: { key: DateField; label: string }[] = [
-  { key: "any", label: "Any Status" },
   { key: "deadline", label: "Deadline" },
   { key: "created", label: "Created" },
   { key: "started", label: "Started" },
@@ -69,7 +69,15 @@ export function TaskBoard({
   const [q, setQ] = React.useState("");
   const [priority, setPriority] = React.useState("");
   const [client, setClient] = React.useState("");
-  const [dateField, setDateField] = React.useState<DateField>("any");
+  // Empty means "Any Status"; several are OR-ed on the server.
+  const [dateFields, setDateFields] = React.useState<DateField[]>([]);
+  const toggleDateField = (key: DateField) =>
+    setDateFields((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
+  // Selected chips first so they are visible without scrolling the row.
+  const orderedFields = [
+    ...DATE_FIELDS.filter((f) => dateFields.includes(f.key)),
+    ...DATE_FIELDS.filter((f) => !dateFields.includes(f.key)),
+  ];
   const [from, setFrom] = React.useState("");
   const [to, setTo] = React.useState("");
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -95,7 +103,7 @@ export function TaskBoard({
   if (priority) qp.set("priority", priority);
   if (client) qp.set("client", client);
   // Sent even without dates: on its own the selection filters by status.
-  if (dateField !== "any") qp.set("dateField", dateField);
+  dateFields.forEach((f) => qp.append("dateField", f));
   if (from) qp.set("from", from);
   if (to) qp.set("to", to);
   if (scope === "mine") qp.set("mine", "1");
@@ -103,7 +111,7 @@ export function TaskBoard({
 
   const queryKey = [
     "tasks", scope ?? "all", fixedProjectId ?? "", q, priority, client,
-    dateField, from, to,
+    dateFields.join(","), from, to,
   ];
   const { data, isLoading } = useQuery({
     queryKey,
@@ -151,11 +159,44 @@ export function TaskBoard({
           </Select>
         )}
 
-        {/* Date range. "Any date" matches a task when any of the dates below
-            falls inside the range; the To day is inclusive. */}
-        <Select value={dateField} onChange={(e) => setDateField(e.target.value as DateField)} className="w-44" aria-label="Filter date by">
-          {DATE_FIELDS.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-        </Select>
+        {/* Date range. "Any Status" matches a task when any of the dates below
+            falls inside the range; picking several matches any of them. The
+            To day is inclusive. */}
+        <div
+          role="group"
+          aria-label="Filter date by"
+          className="flex max-w-full items-center overflow-x-auto rounded-lg border border-border p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <motion.button
+            layout
+            type="button"
+            aria-pressed={dateFields.length === 0}
+            onClick={() => setDateFields([])}
+            className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+              dateFields.length === 0 ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Any Status
+          </motion.button>
+          {orderedFields.map((f) => {
+            const active = dateFields.includes(f.key);
+            return (
+              <motion.button
+                layout
+                key={f.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggleDateField(f.key)}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+                  active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f.label}
+              </motion.button>
+            );
+          })}
+        </div>
         <DatePicker value={from} onChange={setFrom} placeholder="From" ariaLabel="From date" />
         <DatePicker value={to} onChange={setTo} placeholder="To" ariaLabel="To date" />
 

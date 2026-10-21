@@ -7,7 +7,7 @@
   "5": "avatar/route.ts",
   "6": "page-header.tsx",
   "7": "command-palette.tsx",
-  "8": "apiGet",
+  "8": "sales-bits.tsx",
   "9": "task-lifecycle.ts",
   "10": "notify.ts",
   "11": "dependencies",
@@ -72,5 +72,9 @@
   "70": "next",
   "71": "zustand",
   "72": "recharts",
-  "75": "@tanstack/react-table"
+  "73": "lead-tabs.tsx",
+  "74": "sales-constants.ts",
+  "75": "@tanstack/react-table",
+  "76": "apiGet",
+  "77": "proposals-client.tsx"
 }

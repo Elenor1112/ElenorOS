@@ -1,16 +1,16 @@
-# Graph Report - Tasks System la finalizma  (2026-10-06)
+# Graph Report - Tasks System la finalizma  (2026-10-21)
 
 ## Corpus Check
-- 279 files · ~175,752 words
+- 279 files · ~175,930 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1514 nodes · 5557 edges · 74 communities (58 shown, 16 thin omitted)
+- 1514 nodes · 5557 edges · 78 communities (62 shown, 16 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9ba96742`
+- Built from commit: `07df2f2d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -23,7 +23,7 @@
 - avatar/route.ts
 - page-header.tsx
 - command-palette.tsx
-- apiGet
+- sales-bits.tsx
 - task-lifecycle.ts
 - notify.ts
 - dependencies
@@ -86,7 +86,11 @@
 - next
 - zustand
 - recharts
+- lead-tabs.tsx
+- sales-constants.ts
 - @tanstack/react-table
+- apiGet
+- proposals-client.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `toErrorResponse()` - 209 edges
@@ -123,7 +127,7 @@
 - **Graph Integrity and Data-Loss Guards** — _claude_skills_graphify_skill_empty_graph_guard, _claude_skills_graphify_skill_shrink_guard, _claude_skills_graphify_skill_graph_health_check, _claude_skills_graphify_skill_manifest_stamping, _claude_skills_graphify_references_update_prune_sources, _claude_skills_graphify_references_extraction_spec_source_file_rule [INFERRED 0.85]
 - **Incremental Rebuild Trigger Mechanisms** — _claude_skills_graphify_references_update_incremental_update, _claude_skills_graphify_references_add_watch_watch_mode, _claude_skills_graphify_references_hooks_post_commit_hook, _claude_skills_graphify_references_update_code_only_shortcut, _claude_skills_graphify_references_add_watch_graphify_add [INFERRED 0.85]
 
-## Communities (74 total, 16 thin omitted)
+## Communities (78 total, 16 thin omitted)
 
 ### Community 0 - "toErrorResponse"
 Cohesion: 0.07
@@ -131,7 +135,7 @@ Nodes (46): GET(), DELETE(), GET(), PATCH(), updateSchema, GET(), POST(), schema
 
 ### Community 1 - "utils.ts"
 Cohesion: 0.07
-Nodes (64): ApprovalsClient(), ApprovalsData, ACTION_COLOR, DashboardClient(), AchievementsTab(), EmployeeProfile(), OverviewTab(), WarningsTab() (+56 more)
+Nodes (66): ApprovalsClient(), ApprovalsData, ACTION_COLOR, DashboardClient(), AchievementsTab(), EmployeeProfile(), OverviewTab(), WarningsTab() (+58 more)
 
 ### Community 2 - "job-description/route.ts"
 Cohesion: 0.13
@@ -157,9 +161,9 @@ Nodes (7): AnalyticsClient(), AuditClient(), colorFor(), EmployeesClient(), Page
 Cohesion: 0.07
 Nodes (30): SettingsClient(), inter, metadata, Providers(), useCanSeeSalesModule(), ACTIONS, CommandPalette(), HIT_META (+22 more)
 
-### Community 8 - "apiGet"
-Cohesion: 0.05
-Nodes (100): ActivitiesClient(), ActivityRow, ClientRow, SalesClientsClient(), BriefRow, DiscoveryClient(), FeedbackClient(), FeedbackRow (+92 more)
+### Community 8 - "sales-bits.tsx"
+Cohesion: 0.12
+Nodes (24): ActivityRow, ClientRow, SalesClientsClient(), BriefRow, FeedbackRow, LeadRef, MyDashboard, MyDashboardClient() (+16 more)
 
 ### Community 9 - "task-lifecycle.ts"
 Cohesion: 0.17
@@ -175,11 +179,11 @@ Nodes (31): @auth/prisma-adapter, bcryptjs, class-variance-authority, clsx, @hoo
 
 ### Community 12 - "card.tsx"
 Cohesion: 0.15
-Nodes (18): COMPONENTS, EotmClient(), OverrideDialog(), PickAnyDialog(), WeightsDialog(), PASSWORD_RULES, ResignDialog(), axisStyle (+10 more)
+Nodes (18): COMPONENTS, EotmClient(), OverrideDialog(), PickAnyDialog(), WeightsDialog(), ChangePasswordCard(), PASSWORD_RULES, axisStyle (+10 more)
 
 ### Community 13 - "fetcher.ts"
-Cohesion: 0.10
-Nodes (53): CLIENT_CONTACT_FIELDS, CLIENT_FIELDS, STATUS, COLORS, Dept, FormValues, schema, EditProjectButton() (+45 more)
+Cohesion: 0.11
+Nodes (50): CLIENT_CONTACT_FIELDS, CLIENT_FIELDS, STATUS, COLORS, Dept, FormValues, schema, STATUSES (+42 more)
 
 ### Community 14 - "sales-schemas.ts"
 Cohesion: 0.06
@@ -219,15 +223,15 @@ Nodes (14): Discrete Confidence Score Rubric, DEEP_MODE Aggressive Inference, Ex
 
 ### Community 23 - "apiSend"
 Cohesion: 0.06
-Nodes (38): ClientsClient(), EditClientDialog(), DepartmentsClient(), EditDepartmentDialog(), CreateEmployeeDialog(), Dept, Employee, AvatarPickerButton() (+30 more)
+Nodes (37): ClientsClient(), EditClientDialog(), DepartmentsClient(), EditDepartmentDialog(), CreateEmployeeDialog(), Dept, Employee, AvatarPickerButton() (+29 more)
 
 ### Community 24 - "Effective Permissions Formula"
 Cohesion: 0.20
 Nodes (12): Auth Endpoints (login, logout, refresh, me), Authentication Flow (JWT + Rotating Refresh), getSessionUser(), State Management (TanStack Query + Session Context), Identity, Org & RBAC Domain, RefreshToken model, UserPermission override (ALLOW/DENY), Soft Deletes (deactivate, revoke tokens) (+4 more)
 
 ### Community 25 - "team-performance.tsx"
-Cohesion: 0.12
-Nodes (11): MemberFeedbackDialog(), RATING_WORDS, MEDALS, MemberFeedback, MiniTable(), Money(), ProfileData, RosterData (+3 more)
+Cohesion: 0.09
+Nodes (24): TasksTab(), LeadDetailCard(), LeadTable(), MEDALS, TeamClient(), TeamData, TeamRow, MemberFeedbackDialog() (+16 more)
 
 ### Community 26 - "activity-report.tsx"
 Cohesion: 0.14
@@ -349,6 +353,22 @@ Nodes (3): APPLY, beforeArg, db
 Cohesion: 0.38
 Nodes (6): feedbackSchema, GET(), personPick, POST(), requireTeamViewer(), text
 
+### Community 73 - "lead-tabs.tsx"
+Cohesion: 0.11
+Nodes (29): Tab, TAB_SLUG, tabCount(), TABS, ActivitiesTab(), AuditRow, CommentsTab(), DiscoveryTab() (+21 more)
+
+### Community 74 - "sales-constants.ts"
+Cohesion: 0.15
+Nodes (14): AttachmentParent, AttachmentsPanel(), formatBytes(), SalesAttachment, Brief, BRIEF_STATUS_META, COMPANY_SIZE_META, IDEA_IMPACT_META (+6 more)
+
+### Community 76 - "apiGet"
+Cohesion: 0.27
+Nodes (18): ActivitiesClient(), DiscoveryClient(), FeedbackClient(), ConvertIdeaDialog(), IdeaDialog(), IdeasClient(), LeadDetailClient(), AuditTab() (+10 more)
+
+### Community 77 - "proposals-client.tsx"
+Cohesion: 0.40
+Nodes (4): Milestone(), ProposalRow, PROPOSAL_EVENT_META, PROPOSAL_STATUS_META
+
 ## Ambiguous Edges - Review These
 - `AuditLog model` → `Graphify Knowledge Graph Workflow`  [AMBIGUOUS]
   CLAUDE.md · relation: semantically_similar_to
@@ -374,4 +394,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `toErrorResponse` be split into smaller, more focused modules?**
   _Cohesion score 0.07188778492109878 - nodes in this community are weakly interconnected._
 - **Should `utils.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.06760630673674152 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06593642611683849 - nodes in this community are weakly interconnected._

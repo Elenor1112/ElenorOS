@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
     const toKey = dayKey(sp.get("to"));
     const from = fromKey ? parseUserDateTime(fromKey) : null;
     const toNext = toKey ? parseUserDateTime(addDaysKey(toKey, 1)) : null;
+    const dateFields = sp.getAll("dateField").filter(Boolean);
     if (from || toNext) {
       const range: { gte?: Date; lt?: Date } = {
         ...(from ? { gte: from } : {}),
@@ -82,13 +83,12 @@ export async function GET(req: NextRequest) {
         hold: enteredStatus("HOLD"),
         approved: { approvedAt: range },
       } satisfies Record<string, Prisma.TaskWhereInput>;
-      const field = sp.get("dateField") ?? "any";
+      // Several fields match any of them; none (or none known) means all.
+      const picked = dateFields
+        .filter((f): f is keyof typeof columns => Object.hasOwn(columns, f))
+        .map((f) => columns[f]);
       // Into AND, not the top-level OR, for the same reason as `mine` above.
-      and.push(
-        field in columns
-          ? columns[field as keyof typeof columns]
-          : { OR: Object.values(columns) }
-      );
+      and.push({ OR: picked.length ? picked : Object.values(columns) });
     } else {
       // No dates picked: the same selection filters on where the task is now.
       const current: Record<string, Prisma.TaskWhereInput> = {
@@ -99,8 +99,11 @@ export async function GET(req: NextRequest) {
         hold: { status: "HOLD" },
         approved: { status: "DONE" },
       };
-      const key = sp.get("dateField") ?? "";
-      if (Object.hasOwn(current, key)) and.push(current[key]);
+      // A picked field with no current-state predicate (Created) restricts
+      // nothing, so OR-ing it in means no restriction at all.
+      if (dateFields.length && dateFields.every((f) => Object.hasOwn(current, f))) {
+        and.push({ OR: dateFields.map((f) => current[f]) });
+      }
     }
 
     const where: Prisma.TaskWhereInput = {

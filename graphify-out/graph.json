@@ -113,6 +113,19 @@
       "norm_label": "approvalsdata"
     },
     {
+      "label": "Row",
+      "file_type": "code",
+      "source_file": "src/app/(app)/employees/[id]/permission-editor.tsx",
+      "source_location": "L11",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_employees_id_permission_editor_row",
+      "community": 1,
+      "community_name": "utils.ts",
+      "norm_label": "row"
+    },
+    {
       "label": "Leave",
       "file_type": "code",
       "source_file": "src/app/(app)/leave/leave-client.tsx",
@@ -155,7 +168,7 @@
       "label": "DateField",
       "file_type": "code",
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L25",
+      "source_location": "L26",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -620,19 +633,6 @@
       "norm_label": "employee"
     },
     {
-      "label": "Row",
-      "file_type": "code",
-      "source_file": "src/app/(app)/employees/[id]/permission-editor.tsx",
-      "source_location": "L11",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_employees_id_permission_editor_row",
-      "community": 23,
-      "community_name": "apiSend",
-      "norm_label": "row"
-    },
-    {
       "label": "Tab",
       "file_type": "code",
       "source_file": "src/app/(app)/job-description/job-description-client.tsx",
@@ -644,6 +644,32 @@
       "community": 23,
       "community_name": "apiSend",
       "norm_label": "tab"
+    },
+    {
+      "label": "TeamData",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/team/team-client.tsx",
+      "source_location": "L23",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_team_team_client_teamdata",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "teamdata"
+    },
+    {
+      "label": "TeamRow",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/team/team-client.tsx",
+      "source_location": "L14",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_team_team_client_teamrow",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "teamrow"
     },
     {
       "label": "MemberFeedback",
@@ -1036,6 +1062,162 @@
       "norm_label": "pushstate"
     },
     {
+      "label": "Tab",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
+      "source_location": "L38",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_detail_client_tab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "tab"
+    },
+    {
+      "label": "AuditRow",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L1083",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_auditrow",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "auditrow"
+    },
+    {
+      "label": "LeadBrief",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L56",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_leadbrief",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "leadbrief"
+    },
+    {
+      "label": "LeadDetail",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L101",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_leaddetail",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "leaddetail"
+    },
+    {
+      "label": "LeadFeedback",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L63",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_leadfeedback",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "leadfeedback"
+    },
+    {
+      "label": "LeadMeeting",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L45",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_leadmeeting",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "leadmeeting"
+    },
+    {
+      "label": "LeadProposal",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L78",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_leadproposal",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "leadproposal"
+    },
+    {
+      "label": "LeadRequest",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L93",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_leadrequest",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "leadrequest"
+    },
+    {
+      "label": "AttachmentParent",
+      "file_type": "code",
+      "source_file": "src/components/sales/attachments-panel.tsx",
+      "source_location": "L24",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_components_sales_attachments_panel_attachmentparent",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "attachmentparent"
+    },
+    {
+      "label": "SalesAttachment",
+      "file_type": "code",
+      "source_file": "src/components/sales/attachments-panel.tsx",
+      "source_location": "L13",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_components_sales_attachments_panel_salesattachment",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "salesattachment"
+    },
+    {
+      "label": "Brief",
+      "file_type": "code",
+      "source_file": "src/components/sales/discovery-form.tsx",
+      "source_location": "L22",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_components_sales_discovery_form_brief",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "brief"
+    },
+    {
+      "label": "ProposalRow",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/proposals/proposals-client.tsx",
+      "source_location": "L26",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_proposals_proposals_client_proposalrow",
+      "community": 77,
+      "community_name": "proposals-client.tsx",
+      "norm_label": "proposalrow"
+    },
+    {
       "label": "ActivityRow",
       "file_type": "code",
       "source_file": "src/app/(app)/sales/activities/activities-client.tsx",
@@ -1045,7 +1227,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_activities_activities_client_activityrow",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "activityrow"
     },
     {
@@ -1058,7 +1240,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_clients_sales_clients_client_clientrow",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "clientrow"
     },
     {
@@ -1071,7 +1253,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_discovery_discovery_client_briefrow",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "briefrow"
     },
     {
@@ -1084,112 +1266,8 @@
       "_origin": "ast",
       "id": "src_app_app_sales_feedback_feedback_client_feedbackrow",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "feedbackrow"
-    },
-    {
-      "label": "Tab",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
-      "source_location": "L38",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_detail_client_tab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "tab"
-    },
-    {
-      "label": "AuditRow",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L1083",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_auditrow",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "auditrow"
-    },
-    {
-      "label": "LeadBrief",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L56",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_leadbrief",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadbrief"
-    },
-    {
-      "label": "LeadDetail",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L101",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_leaddetail",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leaddetail"
-    },
-    {
-      "label": "LeadFeedback",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L63",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_leadfeedback",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadfeedback"
-    },
-    {
-      "label": "LeadMeeting",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L45",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_leadmeeting",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadmeeting"
-    },
-    {
-      "label": "LeadProposal",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L78",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_leadproposal",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadproposal"
-    },
-    {
-      "label": "LeadRequest",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L93",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_leadrequest",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadrequest"
     },
     {
       "label": "LeadRef",
@@ -1201,7 +1279,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_my_dashboard_client_leadref",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "leadref"
     },
     {
@@ -1214,21 +1292,8 @@
       "_origin": "ast",
       "id": "src_app_app_sales_my_dashboard_client_mydashboard",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "mydashboard"
-    },
-    {
-      "label": "ProposalRow",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/proposals/proposals-client.tsx",
-      "source_location": "L26",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_proposals_proposals_client_proposalrow",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "proposalrow"
     },
     {
       "label": "DashboardData",
@@ -1240,73 +1305,8 @@
       "_origin": "ast",
       "id": "src_app_app_sales_sales_dashboard_client_dashboarddata",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "dashboarddata"
-    },
-    {
-      "label": "TeamData",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/team/team-client.tsx",
-      "source_location": "L23",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_team_team_client_teamdata",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "teamdata"
-    },
-    {
-      "label": "TeamRow",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/team/team-client.tsx",
-      "source_location": "L14",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_team_team_client_teamrow",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "teamrow"
-    },
-    {
-      "label": "AttachmentParent",
-      "file_type": "code",
-      "source_file": "src/components/sales/attachments-panel.tsx",
-      "source_location": "L24",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_components_sales_attachments_panel_attachmentparent",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "attachmentparent"
-    },
-    {
-      "label": "SalesAttachment",
-      "file_type": "code",
-      "source_file": "src/components/sales/attachments-panel.tsx",
-      "source_location": "L13",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_components_sales_attachments_panel_salesattachment",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "salesattachment"
-    },
-    {
-      "label": "Brief",
-      "file_type": "code",
-      "source_file": "src/components/sales/discovery-form.tsx",
-      "source_location": "L22",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "src_components_sales_discovery_form_brief",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "brief"
     },
     {
       "label": "PersonRef",
@@ -1318,7 +1318,7 @@
       "_origin": "ast",
       "id": "src_components_sales_sales_bits_personref",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "personref"
     },
     {
@@ -1331,7 +1331,7 @@
       "_origin": "ast",
       "id": "src_lib_sales_performance_salesperformance",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "salesperformance"
     },
     {
@@ -1879,6 +1879,18 @@
       "norm_label": "warningstab()"
     },
     {
+      "label": "Segmented()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/employees/[id]/permission-editor.tsx",
+      "source_location": "L93",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_employees_id_permission_editor_segmented",
+      "community": 1,
+      "community_name": "utils.ts",
+      "norm_label": "segmented()"
+    },
+    {
       "label": "Empty()",
       "file_type": "code",
       "source_file": "src/app/(app)/leave/leave-client.tsx",
@@ -2273,6 +2285,18 @@
       "community": 1,
       "community_name": "utils.ts",
       "norm_label": "progress()"
+    },
+    {
+      "label": "Skeleton()",
+      "file_type": "code",
+      "source_file": "src/components/ui/skeleton.tsx",
+      "source_location": "L3",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_ui_skeleton_skeleton",
+      "community": 1,
+      "community_name": "utils.ts",
+      "norm_label": "skeleton()"
     },
     {
       "label": "avatarColor()",
@@ -2743,16 +2767,16 @@
       "norm_label": "weightsdialog()"
     },
     {
-      "label": "ResignDialog()",
+      "label": "ChangePasswordCard()",
       "file_type": "code",
       "source_file": "src/app/(app)/settings/settings-client.tsx",
-      "source_location": "L201",
+      "source_location": "L96",
       "_callable": true,
       "_origin": "ast",
-      "id": "src_app_app_settings_settings_client_resigndialog",
+      "id": "src_app_app_settings_settings_client_changepasswordcard",
       "community": 12,
       "community_name": "card.tsx",
-      "norm_label": "resigndialog()"
+      "norm_label": "changepasswordcard()"
     },
     {
       "label": "DeptBar()",
@@ -2827,18 +2851,6 @@
       "norm_label": "field()"
     },
     {
-      "label": "EditProjectButton()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/projects/[id]/edit-project-button.tsx",
-      "source_location": "L20",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_projects_id_edit_project_button_editprojectbutton",
-      "community": 13,
-      "community_name": "fetcher.ts",
-      "norm_label": "editprojectbutton()"
-    },
-    {
       "label": "ProjectsClient()",
       "file_type": "code",
       "source_file": "src/app/(app)/projects/projects-client.tsx",
@@ -2849,18 +2861,6 @@
       "community": 13,
       "community_name": "fetcher.ts",
       "norm_label": "projectsclient()"
-    },
-    {
-      "label": "ConvertIdeaDialog()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/ideas/ideas-client.tsx",
-      "source_location": "L402",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_ideas_ideas_client_convertideadialog",
-      "community": 13,
-      "community_name": "fetcher.ts",
-      "norm_label": "convertideadialog()"
     },
     {
       "label": "LoginForm()",
@@ -3055,18 +3055,6 @@
       "norm_label": "notinthepast()"
     },
     {
-      "label": "toDateInputValue()",
-      "file_type": "code",
-      "source_file": "src/lib/utils.ts",
-      "source_location": "L41",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_lib_utils_todateinputvalue",
-      "community": 13,
-      "community_name": "fetcher.ts",
-      "norm_label": "todateinputvalue()"
-    },
-    {
       "label": "todayDateTimeMin()",
       "file_type": "code",
       "source_file": "src/lib/utils.ts",
@@ -3142,7 +3130,7 @@
       "label": "addDaysKey()",
       "file_type": "code",
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L160",
+      "source_location": "L163",
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_api_tasks_route_adddayskey",
@@ -3166,7 +3154,7 @@
       "label": "POST()",
       "file_type": "code",
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L196",
+      "source_location": "L199",
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_api_tasks_route_post",
@@ -5083,18 +5071,6 @@
       "norm_label": "permissioneditor()"
     },
     {
-      "label": "Segmented()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/employees/[id]/permission-editor.tsx",
-      "source_location": "L93",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_employees_id_permission_editor_segmented",
-      "community": 23,
-      "community_name": "apiSend",
-      "norm_label": "segmented()"
-    },
-    {
       "label": "JobDescriptionClient()",
       "file_type": "code",
       "source_file": "src/app/(app)/job-description/job-description-client.tsx",
@@ -5167,28 +5143,28 @@
       "norm_label": "policiesclient()"
     },
     {
-      "label": "IdeaDialog()",
+      "label": "EditProjectButton()",
       "file_type": "code",
-      "source_file": "src/app/(app)/sales/ideas/ideas-client.tsx",
-      "source_location": "L267",
+      "source_file": "src/app/(app)/projects/[id]/edit-project-button.tsx",
+      "source_location": "L20",
       "_callable": true,
       "_origin": "ast",
-      "id": "src_app_app_sales_ideas_ideas_client_ideadialog",
+      "id": "src_app_app_projects_id_edit_project_button_editprojectbutton",
       "community": 23,
       "community_name": "apiSend",
-      "norm_label": "ideadialog()"
+      "norm_label": "editprojectbutton()"
     },
     {
-      "label": "ChangePasswordCard()",
+      "label": "ResignDialog()",
       "file_type": "code",
       "source_file": "src/app/(app)/settings/settings-client.tsx",
-      "source_location": "L96",
+      "source_location": "L201",
       "_callable": true,
       "_origin": "ast",
-      "id": "src_app_app_settings_settings_client_changepasswordcard",
+      "id": "src_app_app_settings_settings_client_resigndialog",
       "community": 23,
       "community_name": "apiSend",
-      "norm_label": "changepasswordcard()"
+      "norm_label": "resigndialog()"
     },
     {
       "label": "formatBytes()",
@@ -5263,18 +5239,6 @@
       "norm_label": "avatarupload()"
     },
     {
-      "label": "Skeleton()",
-      "file_type": "code",
-      "source_file": "src/components/ui/skeleton.tsx",
-      "source_location": "L3",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_ui_skeleton_skeleton",
-      "community": 23,
-      "community_name": "apiSend",
-      "norm_label": "skeleton()"
-    },
-    {
       "label": "apiSend()",
       "file_type": "code",
       "source_file": "src/lib/fetcher.ts",
@@ -5323,6 +5287,66 @@
       "norm_label": "withretry()"
     },
     {
+      "label": "toDateInputValue()",
+      "file_type": "code",
+      "source_file": "src/lib/utils.ts",
+      "source_location": "L41",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_lib_utils_todateinputvalue",
+      "community": 23,
+      "community_name": "apiSend",
+      "norm_label": "todateinputvalue()"
+    },
+    {
+      "label": "TasksTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L951",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_taskstab",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "taskstab()"
+    },
+    {
+      "label": "LeadDetailCard()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/leads-client.tsx",
+      "source_location": "L251",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_leads_client_leaddetailcard",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "leaddetailcard()"
+    },
+    {
+      "label": "LeadTable()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/leads-client.tsx",
+      "source_location": "L372",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_leads_client_leadtable",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "leadtable()"
+    },
+    {
+      "label": "TeamClient()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/team/team-client.tsx",
+      "source_location": "L35",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_team_team_client_teamclient",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "teamclient()"
+    },
+    {
       "label": "MemberFeedbackDialog()",
       "file_type": "code",
       "source_file": "src/components/sales/member-feedback-dialog.tsx",
@@ -5335,6 +5359,42 @@
       "norm_label": "memberfeedbackdialog()"
     },
     {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L334",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_formatdate",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "LeadCard()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L180",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_leadcard",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "leadcard()"
+    },
+    {
+      "label": "SectionCard()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L297",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_sectioncard",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "sectioncard()"
+    },
+    {
       "label": "FeedbackBlock()",
       "file_type": "code",
       "source_file": "src/components/sales/team-performance.tsx",
@@ -5345,6 +5405,18 @@
       "community": 25,
       "community_name": "team-performance.tsx",
       "norm_label": "feedbackblock()"
+    },
+    {
+      "label": "ManagerFeedback()",
+      "file_type": "code",
+      "source_file": "src/components/sales/team-performance.tsx",
+      "source_location": "L597",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_team_performance_managerfeedback",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "managerfeedback()"
     },
     {
       "label": "MiniTable()",
@@ -5405,6 +5477,30 @@
       "community": 25,
       "community_name": "team-performance.tsx",
       "norm_label": "profilestat()"
+    },
+    {
+      "label": "TeamPerformance()",
+      "file_type": "code",
+      "source_file": "src/components/sales/team-performance.tsx",
+      "source_location": "L79",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_team_performance_teamperformance",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "teamperformance()"
+    },
+    {
+      "label": "formatCompactMoney()",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L285",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_formatcompactmoney",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "formatcompactmoney()"
     },
     {
       "label": "DoneTrend()",
@@ -8035,6 +8131,294 @@
       "norm_label": "usepush()"
     },
     {
+      "label": "Metric()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
+      "source_location": "L334",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_detail_client_metric",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "metric()"
+    },
+    {
+      "label": "tabCount()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
+      "source_location": "L344",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_detail_client_tabcount",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "tabcount()"
+    },
+    {
+      "label": "ActivitiesTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L309",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_activitiestab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "activitiestab()"
+    },
+    {
+      "label": "CommentsTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L1002",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_commentstab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "commentstab()"
+    },
+    {
+      "label": "DiscoveryTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L556",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_discoverytab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "discoverytab()"
+    },
+    {
+      "label": "FeedbackTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L573",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_feedbacktab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "feedbacktab()"
+    },
+    {
+      "label": "FilesTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L986",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_filestab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "filestab()"
+    },
+    {
+      "label": "LEAD_KEY()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L146",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_lead_key",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "lead_key()"
+    },
+    {
+      "label": "MeetingsTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L354",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_meetingstab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "meetingstab()"
+    },
+    {
+      "label": "NewRequestTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L828",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_newrequesttab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "newrequesttab()"
+    },
+    {
+      "label": "OverviewTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L150",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_overviewtab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "overviewtab()"
+    },
+    {
+      "label": "ProposalTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L673",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_proposaltab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "proposaltab()"
+    },
+    {
+      "label": "Row()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L243",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_row",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "row()"
+    },
+    {
+      "label": "TimelineTab()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L254",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs_timelinetab",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "timelinetab()"
+    },
+    {
+      "label": "PipelineReports()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/reports/reports-client.tsx",
+      "source_location": "L103",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_reports_reports_client_pipelinereports",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "pipelinereports()"
+    },
+    {
+      "label": "BriefDialog()",
+      "file_type": "code",
+      "source_file": "src/components/sales/brief-dialog.tsx",
+      "source_location": "L37",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_brief_dialog_briefdialog",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "briefdialog()"
+    },
+    {
+      "label": "DiscoveryForm()",
+      "file_type": "code",
+      "source_file": "src/components/sales/discovery-form.tsx",
+      "source_location": "L38",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_discovery_form_discoveryform",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "discoveryform()"
+    },
+    {
+      "label": "RequestDialog()",
+      "file_type": "code",
+      "source_file": "src/components/sales/request-dialog.tsx",
+      "source_location": "L23",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_request_dialog_requestdialog",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "requestdialog()"
+    },
+    {
+      "label": "formatDateTime()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L343",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_formatdatetime",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "formatdatetime()"
+    },
+    {
+      "label": "formatMoney()",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L279",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_formatmoney",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "formatmoney()"
+    },
+    {
+      "label": "AttachmentsPanel()",
+      "file_type": "code",
+      "source_file": "src/components/sales/attachments-panel.tsx",
+      "source_location": "L41",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_attachments_panel_attachmentspanel",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "attachmentspanel()"
+    },
+    {
+      "label": "formatBytes()",
+      "file_type": "code",
+      "source_file": "src/components/sales/attachments-panel.tsx",
+      "source_location": "L265",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_attachments_panel_formatbytes",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "formatbytes()"
+    },
+    {
+      "label": "VoiceRecorder()",
+      "file_type": "code",
+      "source_file": "src/components/sales/attachments-panel.tsx",
+      "source_location": "L192",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_attachments_panel_voicerecorder",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "voicerecorder()"
+    },
+    {
+      "label": "ChipGroup()",
+      "file_type": "code",
+      "source_file": "src/components/sales/discovery-form.tsx",
+      "source_location": "L329",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_discovery_form_chipgroup",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "chipgroup()"
+    },
+    {
       "label": "ActivitiesClient()",
       "file_type": "code",
       "source_file": "src/app/(app)/sales/activities/activities-client.tsx",
@@ -8042,21 +8426,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_activities_activities_client_activitiesclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "activitiesclient()"
-    },
-    {
-      "label": "SalesClientsClient()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/clients/sales-clients-client.tsx",
-      "source_location": "L37",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_clients_sales_clients_client_salesclientsclient",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "salesclientsclient()"
     },
     {
       "label": "DiscoveryClient()",
@@ -8066,7 +8438,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_discovery_discovery_client_discoveryclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "discoveryclient()"
     },
@@ -8078,9 +8450,33 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_feedback_feedback_client_feedbackclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "feedbackclient()"
+    },
+    {
+      "label": "ConvertIdeaDialog()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/ideas/ideas-client.tsx",
+      "source_location": "L402",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_ideas_ideas_client_convertideadialog",
+      "community": 76,
+      "community_name": "apiGet",
+      "norm_label": "convertideadialog()"
+    },
+    {
+      "label": "IdeaDialog()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/ideas/ideas-client.tsx",
+      "source_location": "L267",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_ideas_ideas_client_ideadialog",
+      "community": 76,
+      "community_name": "apiGet",
+      "norm_label": "ideadialog()"
     },
     {
       "label": "IdeasClient()",
@@ -8090,7 +8486,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_ideas_ideas_client_ideasclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "ideasclient()"
     },
@@ -8102,45 +8498,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_leads_id_lead_detail_client_leaddetailclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "leaddetailclient()"
-    },
-    {
-      "label": "Metric()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
-      "source_location": "L334",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_detail_client_metric",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "metric()"
-    },
-    {
-      "label": "tabCount()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
-      "source_location": "L344",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_detail_client_tabcount",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "tabcount()"
-    },
-    {
-      "label": "ActivitiesTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L309",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_activitiestab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "activitiestab()"
     },
     {
       "label": "AuditTab()",
@@ -8150,165 +8510,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_leads_id_lead_tabs_audittab",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "audittab()"
-    },
-    {
-      "label": "CommentsTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L1002",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_commentstab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "commentstab()"
-    },
-    {
-      "label": "DiscoveryTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L556",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_discoverytab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "discoverytab()"
-    },
-    {
-      "label": "FeedbackTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L573",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_feedbacktab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "feedbacktab()"
-    },
-    {
-      "label": "FilesTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L986",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_filestab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "filestab()"
-    },
-    {
-      "label": "LEAD_KEY()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L146",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_lead_key",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "lead_key()"
-    },
-    {
-      "label": "MeetingsTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L354",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_meetingstab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "meetingstab()"
-    },
-    {
-      "label": "NewRequestTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L828",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_newrequesttab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "newrequesttab()"
-    },
-    {
-      "label": "OverviewTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L150",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_overviewtab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "overviewtab()"
-    },
-    {
-      "label": "ProposalTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L673",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_proposaltab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "proposaltab()"
-    },
-    {
-      "label": "Row()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L243",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_row",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "row()"
-    },
-    {
-      "label": "TasksTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L951",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_taskstab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "taskstab()"
-    },
-    {
-      "label": "TimelineTab()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L254",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs_timelinetab",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "timelinetab()"
-    },
-    {
-      "label": "LeadDetailCard()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/leads-client.tsx",
-      "source_location": "L251",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_leads_client_leaddetailcard",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leaddetailcard()"
     },
     {
       "label": "LeadsClient()",
@@ -8318,21 +8522,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_leads_leads_client_leadsclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "leadsclient()"
-    },
-    {
-      "label": "LeadTable()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/leads-client.tsx",
-      "source_location": "L372",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_leads_client_leadtable",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadtable()"
     },
     {
       "label": "MeetingsClient()",
@@ -8342,45 +8534,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_meetings_meetings_client_meetingsclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "meetingsclient()"
-    },
-    {
-      "label": "MiniStat()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/my-dashboard-client.tsx",
-      "source_location": "L414",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_my_dashboard_client_ministat",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "ministat()"
-    },
-    {
-      "label": "MyDashboardClient()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/my-dashboard-client.tsx",
-      "source_location": "L79",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_my_dashboard_client_mydashboardclient",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "mydashboardclient()"
-    },
-    {
-      "label": "ViewAll()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/my-dashboard-client.tsx",
-      "source_location": "L436",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_my_dashboard_client_viewall",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "viewall()"
     },
     {
       "label": "PipelineClient()",
@@ -8390,21 +8546,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_pipeline_pipeline_client_pipelineclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "pipelineclient()"
-    },
-    {
-      "label": "Milestone()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/proposals/proposals-client.tsx",
-      "source_location": "L197",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_proposals_proposals_client_milestone",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "milestone()"
     },
     {
       "label": "ProposalsClient()",
@@ -8414,21 +8558,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_proposals_proposals_client_proposalsclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "proposalsclient()"
-    },
-    {
-      "label": "PipelineReports()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/reports/reports-client.tsx",
-      "source_location": "L103",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_reports_reports_client_pipelinereports",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "pipelinereports()"
     },
     {
       "label": "SalesDashboardClient()",
@@ -8438,165 +8570,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_app_app_sales_sales_dashboard_client_salesdashboardclient",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "salesdashboardclient()"
-    },
-    {
-      "label": "ViewAll()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/sales-dashboard-client.tsx",
-      "source_location": "L358",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_sales_dashboard_client_viewall",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "viewall()"
-    },
-    {
-      "label": "TeamClient()",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/team/team-client.tsx",
-      "source_location": "L35",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_app_app_sales_team_team_client_teamclient",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "teamclient()"
-    },
-    {
-      "label": "AttachmentsPanel()",
-      "file_type": "code",
-      "source_file": "src/components/sales/attachments-panel.tsx",
-      "source_location": "L41",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_attachments_panel_attachmentspanel",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "attachmentspanel()"
-    },
-    {
-      "label": "formatBytes()",
-      "file_type": "code",
-      "source_file": "src/components/sales/attachments-panel.tsx",
-      "source_location": "L265",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_attachments_panel_formatbytes",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "formatbytes()"
-    },
-    {
-      "label": "VoiceRecorder()",
-      "file_type": "code",
-      "source_file": "src/components/sales/attachments-panel.tsx",
-      "source_location": "L192",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_attachments_panel_voicerecorder",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "voicerecorder()"
-    },
-    {
-      "label": "BriefDialog()",
-      "file_type": "code",
-      "source_file": "src/components/sales/brief-dialog.tsx",
-      "source_location": "L37",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_brief_dialog_briefdialog",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "briefdialog()"
-    },
-    {
-      "label": "ChipGroup()",
-      "file_type": "code",
-      "source_file": "src/components/sales/discovery-form.tsx",
-      "source_location": "L329",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_discovery_form_chipgroup",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "chipgroup()"
-    },
-    {
-      "label": "DiscoveryForm()",
-      "file_type": "code",
-      "source_file": "src/components/sales/discovery-form.tsx",
-      "source_location": "L38",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_discovery_form_discoveryform",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "discoveryform()"
-    },
-    {
-      "label": "RequestDialog()",
-      "file_type": "code",
-      "source_file": "src/components/sales/request-dialog.tsx",
-      "source_location": "L23",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_request_dialog_requestdialog",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "requestdialog()"
-    },
-    {
-      "label": "CardGridSkeleton()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L285",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_cardgridskeleton",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "cardgridskeleton()"
-    },
-    {
-      "label": "EmptyState()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L256",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_emptystate",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "emptystate()"
-    },
-    {
-      "label": "formatDate()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L334",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_formatdate",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "formatdate()"
-    },
-    {
-      "label": "formatDateTime()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L343",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_formatdatetime",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "formatdatetime()"
     },
     {
       "label": "formatRelative()",
@@ -8606,129 +8582,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_components_sales_sales_bits_formatrelative",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "formatrelative()"
-    },
-    {
-      "label": "formatTime()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L352",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_formattime",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "formattime()"
-    },
-    {
-      "label": "Icon()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L68",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_icon",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "icon()"
-    },
-    {
-      "label": "LeadCard()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L180",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_leadcard",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "leadcard()"
-    },
-    {
-      "label": "PriorityDot()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L80",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_prioritydot",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "prioritydot()"
-    },
-    {
-      "label": "ProbabilityBar()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L113",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_probabilitybar",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "probabilitybar()"
-    },
-    {
-      "label": "SectionCard()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L297",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_sectioncard",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "sectioncard()"
-    },
-    {
-      "label": "StageBadge()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L75",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_stagebadge",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "stagebadge()"
-    },
-    {
-      "label": "StatTile()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L131",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_stattile",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "stattile()"
-    },
-    {
-      "label": "TemperatureBadge()",
-      "file_type": "code",
-      "source_file": "src/components/sales/sales-bits.tsx",
-      "source_location": "L90",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_sales_bits_temperaturebadge",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "temperaturebadge()"
-    },
-    {
-      "label": "ManagerFeedback()",
-      "file_type": "code",
-      "source_file": "src/components/sales/team-performance.tsx",
-      "source_location": "L597",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_team_performance_managerfeedback",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "managerfeedback()"
     },
     {
       "label": "SalespersonProfile()",
@@ -8738,21 +8594,9 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_components_sales_team_performance_salespersonprofile",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "salespersonprofile()"
-    },
-    {
-      "label": "TeamPerformance()",
-      "file_type": "code",
-      "source_file": "src/components/sales/team-performance.tsx",
-      "source_location": "L79",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "src_components_sales_team_performance_teamperformance",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "teamperformance()"
     },
     {
       "label": "useSalesMeta()",
@@ -8762,7 +8606,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_components_sales_use_sales_meta_usesalesmeta",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "usesalesmeta()"
     },
@@ -8774,7 +8618,7 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_components_session_context_usecan",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "usecan()"
     },
@@ -8786,33 +8630,189 @@
       "_callable": true,
       "_origin": "ast",
       "id": "src_lib_fetcher_apiget",
-      "community": 8,
+      "community": 76,
       "community_name": "apiGet",
       "norm_label": "apiget()"
     },
     {
-      "label": "formatCompactMoney()",
+      "label": "Milestone()",
       "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
+      "source_file": "src/app/(app)/sales/proposals/proposals-client.tsx",
+      "source_location": "L197",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_proposals_proposals_client_milestone",
+      "community": 77,
+      "community_name": "proposals-client.tsx",
+      "norm_label": "milestone()"
+    },
+    {
+      "label": "SalesClientsClient()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/clients/sales-clients-client.tsx",
+      "source_location": "L37",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_clients_sales_clients_client_salesclientsclient",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "salesclientsclient()"
+    },
+    {
+      "label": "MiniStat()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/my-dashboard-client.tsx",
+      "source_location": "L414",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_my_dashboard_client_ministat",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "ministat()"
+    },
+    {
+      "label": "MyDashboardClient()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/my-dashboard-client.tsx",
+      "source_location": "L79",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_my_dashboard_client_mydashboardclient",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "mydashboardclient()"
+    },
+    {
+      "label": "ViewAll()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/my-dashboard-client.tsx",
+      "source_location": "L436",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_my_dashboard_client_viewall",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "viewall()"
+    },
+    {
+      "label": "ViewAll()",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/sales-dashboard-client.tsx",
+      "source_location": "L358",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_app_app_sales_sales_dashboard_client_viewall",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "viewall()"
+    },
+    {
+      "label": "CardGridSkeleton()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
       "source_location": "L285",
       "_callable": true,
       "_origin": "ast",
-      "id": "src_lib_sales_constants_formatcompactmoney",
+      "id": "src_components_sales_sales_bits_cardgridskeleton",
       "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "formatcompactmoney()"
+      "community_name": "sales-bits.tsx",
+      "norm_label": "cardgridskeleton()"
     },
     {
-      "label": "formatMoney()",
+      "label": "EmptyState()",
       "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L279",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L256",
       "_callable": true,
       "_origin": "ast",
-      "id": "src_lib_sales_constants_formatmoney",
+      "id": "src_components_sales_sales_bits_emptystate",
       "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "formatmoney()"
+      "community_name": "sales-bits.tsx",
+      "norm_label": "emptystate()"
+    },
+    {
+      "label": "formatTime()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L352",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_formattime",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "formattime()"
+    },
+    {
+      "label": "Icon()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L68",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_icon",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "icon()"
+    },
+    {
+      "label": "PriorityDot()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L80",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_prioritydot",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "prioritydot()"
+    },
+    {
+      "label": "ProbabilityBar()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L113",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_probabilitybar",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "probabilitybar()"
+    },
+    {
+      "label": "StageBadge()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L75",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_stagebadge",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "stagebadge()"
+    },
+    {
+      "label": "StatTile()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L131",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_stattile",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "stattile()"
+    },
+    {
+      "label": "TemperatureBadge()",
+      "file_type": "code",
+      "source_file": "src/components/sales/sales-bits.tsx",
+      "source_location": "L90",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "src_components_sales_sales_bits_temperaturebadge",
+      "community": 8,
+      "community_name": "sales-bits.tsx",
+      "norm_label": "temperaturebadge()"
     },
     {
       "label": "notifyMany()",
@@ -9300,6 +9300,17 @@
       "norm_label": "dashboard-client.tsx"
     },
     {
+      "label": "permission-editor.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(app)/employees/[id]/permission-editor.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_app_employees_id_permission_editor",
+      "community": 1,
+      "community_name": "utils.ts",
+      "norm_label": "permission-editor.tsx"
+    },
+    {
       "label": "leave-client.tsx",
       "file_type": "code",
       "source_file": "src/app/(app)/leave/leave-client.tsx",
@@ -9446,7 +9457,7 @@
       "label": "DATE_FIELDS",
       "file_type": "code",
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L26",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_tasks_task_board_date_fields",
       "community": 1,
@@ -9518,6 +9529,17 @@
       "community": 1,
       "community_name": "utils.ts",
       "norm_label": "progress.tsx"
+    },
+    {
+      "label": "skeleton.tsx",
+      "file_type": "code",
+      "source_file": "src/components/ui/skeleton.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_components_ui_skeleton",
+      "community": 1,
+      "community_name": "utils.ts",
+      "norm_label": "skeleton.tsx"
     },
     {
       "label": "constants.ts",
@@ -11316,7 +11338,7 @@
       "label": "createSchema",
       "file_type": "code",
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L166",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "src_app_api_tasks_route_createschema",
       "community": 15,
@@ -13128,17 +13150,6 @@
       "norm_label": "job-description-panel.tsx"
     },
     {
-      "label": "permission-editor.tsx",
-      "file_type": "code",
-      "source_file": "src/app/(app)/employees/[id]/permission-editor.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_app_app_employees_id_permission_editor",
-      "community": 23,
-      "community_name": "apiSend",
-      "norm_label": "permission-editor.tsx"
-    },
-    {
       "label": "job-description-client.tsx",
       "file_type": "code",
       "source_file": "src/app/(app)/job-description/job-description-client.tsx",
@@ -13205,17 +13216,6 @@
       "norm_label": "avatar-upload.tsx"
     },
     {
-      "label": "skeleton.tsx",
-      "file_type": "code",
-      "source_file": "src/components/ui/skeleton.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_components_ui_skeleton",
-      "community": 23,
-      "community_name": "apiSend",
-      "norm_label": "skeleton.tsx"
-    },
-    {
       "label": "WARNING_META",
       "file_type": "code",
       "source_file": "src/lib/constants.ts",
@@ -13236,6 +13236,28 @@
       "community": 23,
       "community_name": "apiSend",
       "norm_label": "role_meta"
+    },
+    {
+      "label": "team-client.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/team/team-client.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_app_sales_team_team_client",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "team-client.tsx"
+    },
+    {
+      "label": "MEDALS",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/team/team-client.tsx",
+      "source_location": "L33",
+      "_origin": "ast",
+      "id": "src_app_app_sales_team_team_client_medals",
+      "community": 25,
+      "community_name": "team-performance.tsx",
+      "norm_label": "medals"
     },
     {
       "label": "RATING_WORDS",
@@ -15680,6 +15702,193 @@
       "norm_label": "recharts"
     },
     {
+      "label": "lead-detail-client.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_detail_client",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "lead-detail-client.tsx"
+    },
+    {
+      "label": "TAB_SLUG",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_detail_client_tab_slug",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "tab_slug"
+    },
+    {
+      "label": "TABS",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_detail_client_tabs",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "tabs"
+    },
+    {
+      "label": "lead-tabs.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_app_sales_leads_id_lead_tabs",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "lead-tabs.tsx"
+    },
+    {
+      "label": "MEETING_STATUS_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L124",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_meeting_status_meta",
+      "community": 73,
+      "community_name": "lead-tabs.tsx",
+      "norm_label": "meeting_status_meta"
+    },
+    {
+      "label": "attachments-panel.tsx",
+      "file_type": "code",
+      "source_file": "src/components/sales/attachments-panel.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_components_sales_attachments_panel",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "attachments-panel.tsx"
+    },
+    {
+      "label": "discovery-form.tsx",
+      "file_type": "code",
+      "source_file": "src/components/sales/discovery-form.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_components_sales_discovery_form",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "discovery-form.tsx"
+    },
+    {
+      "label": "sales-constants.ts",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "sales-constants.ts"
+    },
+    {
+      "label": "BRIEF_STATUS_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L138",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_brief_status_meta",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "brief_status_meta"
+    },
+    {
+      "label": "COMPANY_SIZE_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L106",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_company_size_meta",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "company_size_meta"
+    },
+    {
+      "label": "IDEA_IMPACT_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L193",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_idea_impact_meta",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "idea_impact_meta"
+    },
+    {
+      "label": "IDEA_STATUS_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L185",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_idea_status_meta",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "idea_status_meta"
+    },
+    {
+      "label": "MARKETING_CHANNELS",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L265",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_marketing_channels",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "marketing_channels"
+    },
+    {
+      "label": "MARKETING_GOALS",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L234",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_marketing_goals",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "marketing_goals"
+    },
+    {
+      "label": "PIPELINE_COLUMNS",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L73",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_pipeline_columns",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "pipeline_columns"
+    },
+    {
+      "label": "SERVICES_CATALOG",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L244",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_services_catalog",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "services_catalog"
+    },
+    {
+      "label": "SUCCESS_METRICS",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L255",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_success_metrics",
+      "community": 74,
+      "community_name": "sales-constants.ts",
+      "norm_label": "success_metrics"
+    },
+    {
       "label": "@tanstack/react-table",
       "file_type": "code",
       "source_file": "package.json",
@@ -15702,6 +15911,39 @@
       "norm_label": "@tanstack/react-table"
     },
     {
+      "label": "proposals-client.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(app)/sales/proposals/proposals-client.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_app_sales_proposals_proposals_client",
+      "community": 77,
+      "community_name": "proposals-client.tsx",
+      "norm_label": "proposals-client.tsx"
+    },
+    {
+      "label": "PROPOSAL_EVENT_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L172",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_proposal_event_meta",
+      "community": 77,
+      "community_name": "proposals-client.tsx",
+      "norm_label": "proposal_event_meta"
+    },
+    {
+      "label": "PROPOSAL_STATUS_META",
+      "file_type": "code",
+      "source_file": "src/lib/sales-constants.ts",
+      "source_location": "L162",
+      "_origin": "ast",
+      "id": "src_lib_sales_constants_proposal_status_meta",
+      "community": 77,
+      "community_name": "proposals-client.tsx",
+      "norm_label": "proposal_status_meta"
+    },
+    {
       "label": "activities-client.tsx",
       "file_type": "code",
       "source_file": "src/app/(app)/sales/activities/activities-client.tsx",
@@ -15709,7 +15951,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_activities_activities_client",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "activities-client.tsx"
     },
     {
@@ -15720,7 +15962,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_clients_sales_clients_client",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "sales-clients-client.tsx"
     },
     {
@@ -15731,7 +15973,7 @@
       "_origin": "ast",
       "id": "src_app_app_sales_discovery_discovery_client",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "discovery-client.tsx"
     },
     {
@@ -15742,52 +15984,8 @@
       "_origin": "ast",
       "id": "src_app_app_sales_feedback_feedback_client",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "feedback-client.tsx"
-    },
-    {
-      "label": "lead-detail-client.tsx",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_detail_client",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "lead-detail-client.tsx"
-    },
-    {
-      "label": "TAB_SLUG",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
-      "source_location": "L41",
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_detail_client_tab_slug",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "tab_slug"
-    },
-    {
-      "label": "TABS",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-detail-client.tsx",
-      "source_location": "L34",
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_detail_client_tabs",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "tabs"
-    },
-    {
-      "label": "lead-tabs.tsx",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/leads/[id]/lead-tabs.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_app_app_sales_leads_id_lead_tabs",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "lead-tabs.tsx"
     },
     {
       "label": "my-dashboard-client.tsx",
@@ -15797,19 +15995,8 @@
       "_origin": "ast",
       "id": "src_app_app_sales_my_dashboard_client",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "my-dashboard-client.tsx"
-    },
-    {
-      "label": "proposals-client.tsx",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/proposals/proposals-client.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_app_app_sales_proposals_proposals_client",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "proposals-client.tsx"
     },
     {
       "label": "sales-dashboard-client.tsx",
@@ -15819,52 +16006,8 @@
       "_origin": "ast",
       "id": "src_app_app_sales_sales_dashboard_client",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "sales-dashboard-client.tsx"
-    },
-    {
-      "label": "team-client.tsx",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/team/team-client.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_app_app_sales_team_team_client",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "team-client.tsx"
-    },
-    {
-      "label": "MEDALS",
-      "file_type": "code",
-      "source_file": "src/app/(app)/sales/team/team-client.tsx",
-      "source_location": "L33",
-      "_origin": "ast",
-      "id": "src_app_app_sales_team_team_client_medals",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "medals"
-    },
-    {
-      "label": "attachments-panel.tsx",
-      "file_type": "code",
-      "source_file": "src/components/sales/attachments-panel.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_components_sales_attachments_panel",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "attachments-panel.tsx"
-    },
-    {
-      "label": "discovery-form.tsx",
-      "file_type": "code",
-      "source_file": "src/components/sales/discovery-form.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_components_sales_discovery_form",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "discovery-form.tsx"
     },
     {
       "label": "sales-bits.tsx",
@@ -15874,41 +16017,8 @@
       "_origin": "ast",
       "id": "src_components_sales_sales_bits",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "sales-bits.tsx"
-    },
-    {
-      "label": "sales-constants.ts",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "sales-constants.ts"
-    },
-    {
-      "label": "BRIEF_STATUS_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L138",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_brief_status_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "brief_status_meta"
-    },
-    {
-      "label": "COMPANY_SIZE_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L106",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_company_size_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "company_size_meta"
     },
     {
       "label": "DECISION_TIMELINE_META",
@@ -15918,7 +16028,7 @@
       "_origin": "ast",
       "id": "src_lib_sales_constants_decision_timeline_meta",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "decision_timeline_meta"
     },
     {
@@ -15929,30 +16039,8 @@
       "_origin": "ast",
       "id": "src_lib_sales_constants_default_activity_meta",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "default_activity_meta"
-    },
-    {
-      "label": "IDEA_IMPACT_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L193",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_idea_impact_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "idea_impact_meta"
-    },
-    {
-      "label": "IDEA_STATUS_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L185",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_idea_status_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "idea_status_meta"
     },
     {
       "label": "LEAD_SOURCE_META",
@@ -15962,74 +16050,8 @@
       "_origin": "ast",
       "id": "src_lib_sales_constants_lead_source_meta",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "lead_source_meta"
-    },
-    {
-      "label": "MARKETING_CHANNELS",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L265",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_marketing_channels",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "marketing_channels"
-    },
-    {
-      "label": "MARKETING_GOALS",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L234",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_marketing_goals",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "marketing_goals"
-    },
-    {
-      "label": "MEETING_STATUS_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L124",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_meeting_status_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "meeting_status_meta"
-    },
-    {
-      "label": "PIPELINE_COLUMNS",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L73",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_pipeline_columns",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "pipeline_columns"
-    },
-    {
-      "label": "PROPOSAL_EVENT_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L172",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_proposal_event_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "proposal_event_meta"
-    },
-    {
-      "label": "PROPOSAL_STATUS_META",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L162",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_proposal_status_meta",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "proposal_status_meta"
     },
     {
       "label": "SALES_ACTIVITY_META",
@@ -16039,30 +16061,8 @@
       "_origin": "ast",
       "id": "src_lib_sales_constants_sales_activity_meta",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "sales_activity_meta"
-    },
-    {
-      "label": "SERVICES_CATALOG",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L244",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_services_catalog",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "services_catalog"
-    },
-    {
-      "label": "SUCCESS_METRICS",
-      "file_type": "code",
-      "source_file": "src/lib/sales-constants.ts",
-      "source_location": "L255",
-      "_origin": "ast",
-      "id": "src_lib_sales_constants_success_metrics",
-      "community": 8,
-      "community_name": "apiGet",
-      "norm_label": "success_metrics"
     },
     {
       "label": "TEMPERATURE_META",
@@ -16072,7 +16072,7 @@
       "_origin": "ast",
       "id": "src_lib_sales_constants_temperature_meta",
       "community": 8,
-      "community_name": "apiGet",
+      "community_name": "sales-bits.tsx",
       "norm_label": "temperature_meta"
     },
     {
@@ -26050,7 +26050,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L151",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_get",
@@ -26110,7 +26110,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L198",
+      "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26122,7 +26122,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L204",
+      "source_location": "L207",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26134,7 +26134,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L215",
+      "source_location": "L218",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26146,7 +26146,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L227",
+      "source_location": "L230",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26158,7 +26158,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L229",
+      "source_location": "L232",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26170,7 +26170,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L233",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26182,7 +26182,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L251",
+      "source_location": "L254",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26194,7 +26194,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L261",
+      "source_location": "L264",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26206,7 +26206,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L297",
+      "source_location": "L300",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26218,7 +26218,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L308",
+      "source_location": "L311",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -26230,7 +26230,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L329",
+      "source_location": "L332",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route_post",
@@ -30814,7 +30814,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L81",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board_taskboard",
@@ -54614,7 +54614,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_button_button",
+      "target": "src_lib_fetcher_apiget",
       "confidence_score": 1.0
     },
     {
@@ -54626,7 +54626,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_input_input",
+      "target": "src_components_ui_button_button",
       "confidence_score": 1.0
     },
     {
@@ -54638,7 +54638,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_select_select",
+      "target": "src_components_ui_input_input",
       "confidence_score": 1.0
     },
     {
@@ -54650,7 +54650,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_skeleton_skeleton",
+      "target": "src_components_ui_select_select",
       "confidence_score": 1.0
     },
     {
@@ -54662,7 +54662,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_session_context_usecan",
+      "target": "src_components_ui_skeleton_skeleton",
       "confidence_score": 1.0
     },
     {
@@ -54674,7 +54674,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_kanban_view_kanbanview",
+      "target": "src_components_session_context_usecan",
       "confidence_score": 1.0
     },
     {
@@ -54686,7 +54686,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_list_view_listview",
+      "target": "src_components_tasks_kanban_view_kanbanview",
       "confidence_score": 1.0
     },
     {
@@ -54698,7 +54698,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_table_view_tableview",
+      "target": "src_components_tasks_list_view_listview",
       "confidence_score": 1.0
     },
     {
@@ -54710,7 +54710,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_calendar_view_calendarview",
+      "target": "src_components_tasks_table_view_tableview",
       "confidence_score": 1.0
     },
     {
@@ -54722,7 +54722,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_task_detail_taskdetail",
+      "target": "src_components_tasks_calendar_view_calendarview",
       "confidence_score": 1.0
     },
     {
@@ -54734,7 +54734,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_create_task_dialog_createtaskdialog",
+      "target": "src_components_tasks_task_detail_taskdetail",
       "confidence_score": 1.0
     },
     {
@@ -54746,7 +54746,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_deadline_picker_datepicker",
+      "target": "src_components_tasks_create_task_dialog_createtaskdialog",
       "confidence_score": 1.0
     },
     {
@@ -54758,7 +54758,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_lib_constants_priority_meta",
+      "target": "src_components_ui_deadline_picker_datepicker",
       "confidence_score": 1.0
     },
     {
@@ -54770,7 +54770,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_task_bits_tasklistitem",
+      "target": "src_lib_constants_priority_meta",
       "confidence_score": 1.0
     },
     {
@@ -54778,11 +54778,11 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L9",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_lib_fetcher_apiget",
+      "target": "src_components_tasks_task_bits_tasklistitem",
       "confidence_score": 1.0
     },
     {
@@ -68570,7 +68570,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_button",
+      "target": "src_lib_fetcher",
       "confidence_score": 1.0
     },
     {
@@ -68582,7 +68582,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_input",
+      "target": "src_components_ui_button",
       "confidence_score": 1.0
     },
     {
@@ -68594,7 +68594,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_select",
+      "target": "src_components_ui_input",
       "confidence_score": 1.0
     },
     {
@@ -68606,7 +68606,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_skeleton",
+      "target": "src_components_ui_select",
       "confidence_score": 1.0
     },
     {
@@ -68618,7 +68618,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_session_context",
+      "target": "src_components_ui_skeleton",
       "confidence_score": 1.0
     },
     {
@@ -68630,7 +68630,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_kanban_view",
+      "target": "src_components_session_context",
       "confidence_score": 1.0
     },
     {
@@ -68642,7 +68642,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_list_view",
+      "target": "src_components_tasks_kanban_view",
       "confidence_score": 1.0
     },
     {
@@ -68654,7 +68654,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_table_view",
+      "target": "src_components_tasks_list_view",
       "confidence_score": 1.0
     },
     {
@@ -68666,7 +68666,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_calendar_view",
+      "target": "src_components_tasks_table_view",
       "confidence_score": 1.0
     },
     {
@@ -68678,7 +68678,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_task_detail",
+      "target": "src_components_tasks_calendar_view",
       "confidence_score": 1.0
     },
     {
@@ -68690,7 +68690,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_create_task_dialog",
+      "target": "src_components_tasks_task_detail",
       "confidence_score": 1.0
     },
     {
@@ -68702,7 +68702,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_ui_deadline_picker",
+      "target": "src_components_tasks_create_task_dialog",
       "confidence_score": 1.0
     },
     {
@@ -68714,7 +68714,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_lib_constants",
+      "target": "src_components_ui_deadline_picker",
       "confidence_score": 1.0
     },
     {
@@ -68726,7 +68726,7 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_components_tasks_task_bits",
+      "target": "src_lib_constants",
       "confidence_score": 1.0
     },
     {
@@ -68734,11 +68734,11 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L9",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
-      "target": "src_lib_fetcher",
+      "target": "src_components_tasks_task_bits",
       "confidence_score": 1.0
     },
     {
@@ -73204,7 +73204,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L160",
+      "source_location": "L163",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route",
@@ -73215,7 +73215,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L166",
+      "source_location": "L169",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route",
@@ -73226,7 +73226,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/api/tasks/route.ts",
-      "source_location": "L196",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_api_tasks_route",
@@ -77120,7 +77120,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L25",
+      "source_location": "L26",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
@@ -77131,7 +77131,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/tasks/task-board.tsx",
-      "source_location": "L26",
+      "source_location": "L27",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_tasks_task_board",
@@ -83624,5 +83624,5 @@
       "source_file": ".claude/skills/graphify/references/update.md"
     }
   ],
-  "built_at_commit": "9ba96742679169fb2722fa6dd36e4ad42d06e57e"
+  "built_at_commit": "07df2f2d477032d8f94008922894a35e8f1a55cb"
 }
