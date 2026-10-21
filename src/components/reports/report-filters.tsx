@@ -23,9 +23,10 @@ export function ymdDate(ymd: string) {
   return new Date(y, m - 1, d);
 }
 
-export const PRESETS = ["this-week", "this-month", "last-month", "last-30", "custom"] as const;
+export const PRESETS = ["today", "this-week", "this-month", "last-month", "last-30", "custom"] as const;
 export type Preset = (typeof PRESETS)[number];
 const PRESET_LABEL: Record<Preset, string> = {
+  today: "Today",
   "this-week": "This week",
   "this-month": "This month",
   "last-month": "Last month",
@@ -36,6 +37,8 @@ const PRESET_LABEL: Record<Preset, string> = {
 export function presetRange(p: Exclude<Preset, "custom">, today: string): { from: string; to: string } {
   const monthStart = `${today.slice(0, 8)}01`;
   switch (p) {
+    case "today":
+      return { from: today, to: today };
     case "this-week": {
       const dow = new Date(`${today}T00:00:00Z`).getUTCDay();
       return { from: shiftYmd(today, -dow), to: today };

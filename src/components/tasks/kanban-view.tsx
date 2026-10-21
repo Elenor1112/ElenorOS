@@ -16,10 +16,13 @@ export function KanbanView({
   tasks,
   onOpen,
   queryKey,
+  leadingStatuses = [],
 }: {
   tasks: TaskListItem[];
   onOpen: (id: string) => void;
   queryKey: unknown[];
+  /** Columns to show first, in board order — the statuses the filter picked. */
+  leadingStatuses?: TaskStatus[];
 }) {
   const qc = useQueryClient();
   const me = useSession();
@@ -85,6 +88,20 @@ export function KanbanView({
     stripRef.current?.scrollBy({ left: dir * 300, behavior: "smooth" });
   }
 
+  const leadingKey = leadingStatuses.join(",");
+  const columns = React.useMemo(() => {
+    const lead = new Set(leadingKey ? leadingKey.split(",") : []);
+    return [
+      ...TASK_STATUS_ORDER.filter((s) => lead.has(s)),
+      ...TASK_STATUS_ORDER.filter((s) => !lead.has(s)),
+    ];
+  }, [leadingKey]);
+
+  // Bring the strip back to the start so the columns just moved there are seen.
+  React.useEffect(() => {
+    stripRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+  }, [leadingKey]);
+
   function onDrop(status: TaskStatus) {
     if (dragId) {
       const task = tasks.find((t) => t.id === dragId);
@@ -122,12 +139,14 @@ export function KanbanView({
       <NavArrow side="right" disabled={atEnd} onClick={() => scrollBy(1)} />
 
       <div ref={stripRef} onScroll={syncArrows} className="flex gap-3 overflow-x-auto pb-4">
-      {TASK_STATUS_ORDER.map((status) => {
+      {columns.map((status) => {
         const meta = TASK_STATUS_META[status];
         const colTasks = tasks.filter((t) => t.status === status);
         return (
-          <div
+          <motion.div
             key={status}
+            layout="position"
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             onDragOver={(e) => { e.preventDefault(); setOverCol(status); }}
             onDragLeave={() => setOverCol((c) => (c === status ? null : c))}
             onDrop={() => onDrop(status)}
@@ -165,7 +184,7 @@ export function KanbanView({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         );
       })}
       </div>

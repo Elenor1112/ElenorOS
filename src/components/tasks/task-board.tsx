@@ -2,16 +2,16 @@
 import * as React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import {
   LayoutGrid, List as ListIcon, Table2, Calendar as CalendarIcon,
-  Plus, Search, SlidersHorizontal,
+  Plus, Search, SlidersHorizontal, ChevronDown,
 } from "lucide-react";
 import { apiGet } from "@/lib/fetcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover } from "@/components/ui/popover";
 import { useCan } from "@/components/session-context";
 import { KanbanView } from "./kanban-view";
 import { ListView } from "./list-view";
@@ -22,6 +22,7 @@ import { CreateTaskDialog } from "./create-task-dialog";
 import { DatePicker } from "@/components/ui/deadline-picker";
 import { PRIORITY_META } from "@/lib/constants";
 import type { TaskListItem } from "./task-bits";
+import type { TaskStatus } from "@prisma/client";
 
 type DateField = "deadline" | "created" | "started" | "waiting" | "editing" | "hold" | "approved";
 const DATE_FIELDS: { key: DateField; label: string }[] = [
@@ -33,6 +34,15 @@ const DATE_FIELDS: { key: DateField; label: string }[] = [
   { key: "hold", label: "Hold" },
   { key: "approved", label: "Approved" },
 ];
+// The board column each field corresponds to. Deadline and Created are dates
+// every task can have, so they have no column of their own.
+const STATUS_FOR_FIELD: Partial<Record<DateField, TaskStatus>> = {
+  started: "IN_PROGRESS",
+  waiting: "WAITING_APPROVAL",
+  editing: "EDITING",
+  hold: "HOLD",
+  approved: "DONE",
+};
 
 type View = "kanban" | "list" | "table" | "calendar";
 const VIEWS: { key: View; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -73,11 +83,16 @@ export function TaskBoard({
   const [dateFields, setDateFields] = React.useState<DateField[]>([]);
   const toggleDateField = (key: DateField) =>
     setDateFields((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
-  // Selected chips first so they are visible without scrolling the row.
-  const orderedFields = [
-    ...DATE_FIELDS.filter((f) => dateFields.includes(f.key)),
-    ...DATE_FIELDS.filter((f) => !dateFields.includes(f.key)),
-  ];
+  const dateAnchorRef = React.useRef<HTMLButtonElement>(null);
+  const [dateOpen, setDateOpen] = React.useState(false);
+  const dateFieldLabel = !dateFields.length
+    ? "Any Status"
+    : dateFields.length === 1
+      ? DATE_FIELDS.find((f) => f.key === dateFields[0])?.label
+      : `${dateFields.length} statuses`;
+  // Board columns for the picked statuses move to the front, so they are on
+  // screen without scrolling the strip.
+  const leadingStatuses = dateFields.flatMap((f) => (STATUS_FOR_FIELD[f] ? [STATUS_FOR_FIELD[f]] : []));
   const [from, setFrom] = React.useState("");
   const [to, setTo] = React.useState("");
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -162,41 +177,29 @@ export function TaskBoard({
         {/* Date range. "Any Status" matches a task when any of the dates below
             falls inside the range; picking several matches any of them. The
             To day is inclusive. */}
-        <div
-          role="group"
+        <Button
+          ref={dateAnchorRef}
+          variant="outline"
+          onClick={() => setDateOpen((o) => !o)}
+          className="w-44 justify-between"
           aria-label="Filter date by"
-          className="flex max-w-full items-center overflow-x-auto rounded-lg border border-border p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          <motion.button
-            layout
-            type="button"
-            aria-pressed={dateFields.length === 0}
-            onClick={() => setDateFields([])}
-            className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
-              dateFields.length === 0 ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Any Status
-          </motion.button>
-          {orderedFields.map((f) => {
-            const active = dateFields.includes(f.key);
-            return (
-              <motion.button
-                layout
-                key={f.key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => toggleDateField(f.key)}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
-                  active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {f.label}
-              </motion.button>
-            );
-          })}
-        </div>
+          <span className="truncate">{dateFieldLabel}</span>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+        </Button>
+        <Popover open={dateOpen} onClose={() => setDateOpen(false)} anchorRef={dateAnchorRef} className="w-56 p-2">
+          {DATE_FIELDS.map((f) => (
+            <label key={f.key} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+              <input type="checkbox" checked={dateFields.includes(f.key)} onChange={() => toggleDateField(f.key)} className="accent-primary" />
+              <span className="truncate">{f.label}</span>
+            </label>
+          ))}
+          {dateFields.length > 0 && (
+            <Button variant="ghost" size="sm" className="mt-2 w-full" onClick={() => setDateFields([])}>
+              Any Status
+            </Button>
+          )}
+        </Popover>
         <DatePicker value={from} onChange={setFrom} placeholder="From" ariaLabel="From date" />
         <DatePicker value={to} onChange={setTo} placeholder="To" ariaLabel="To date" />
 
@@ -221,7 +224,7 @@ export function TaskBoard({
           </div>
         ) : (
           <>
-            {view === "kanban" && <KanbanView tasks={tasks} onOpen={setOpenTask} queryKey={queryKey} />}
+            {view === "kanban" && <KanbanView tasks={tasks} onOpen={setOpenTask} queryKey={queryKey} leadingStatuses={leadingStatuses} />}
             {view === "list" && <ListView tasks={tasks} onOpen={setOpenTask} />}
             {view === "table" && <TableView tasks={tasks} onOpen={setOpenTask} />}
             {view === "calendar" && <CalendarView tasks={tasks} onOpen={setOpenTask} />}

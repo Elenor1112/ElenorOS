@@ -198,6 +198,7 @@ model User {
   salesUploads        SalesAttachment[]      @relation("SalesAttachmentUploader")
   salesIdeas          SalesIdea[]            @relation("SalesIdeaOwner")
   salesIdeasCreated   SalesIdea[]            @relation("SalesIdeaCreatedBy")
+  salesDailyReports   SalesDailyReport[]     @relation("SalesDailyReportAuthor")
   accountManaged      Client[]               @relation("ClientAccountManager")
 
   createdAt DateTime @default(now()) @db.Timestamptz
@@ -1061,6 +1062,22 @@ model SalesMemberFeedback {
   updatedAt    DateTime @updatedAt @db.Timestamptz
 
   @@index([subjectId, createdAt])
+}
+
+/// A free-text end-of-day report a salesperson writes about their day. Managers
+/// roll these up per person over a day, week, month or custom range.
+model SalesDailyReport {
+  id         String   @id @default(cuid())
+  author     User     @relation("SalesDailyReportAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   String
+  /// Company-calendar day the report is about, "2026-10-21".
+  reportDate String
+  body       String
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
+
+  @@index([authorId, reportDate])
+  @@index([reportDate])
 }
 
 enum WarningLevel {

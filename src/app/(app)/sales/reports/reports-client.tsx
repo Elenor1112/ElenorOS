@@ -9,6 +9,7 @@ import { useCan } from "@/components/session-context";
 import { TeamPerformance } from "@/components/sales/team-performance";
 import { useSetParams } from "@/components/reports/report-filters";
 import { ActivityReport } from "./activity-report";
+import { DailyReports } from "./daily-reports";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,6 +57,7 @@ const TABS = [
   { key: "activity", label: "Activity report" },
   { key: "pipeline", label: "Pipeline reports" },
   { key: "team", label: "Sales Team Performance" },
+  { key: "daily", label: "Daily reports" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -96,6 +98,7 @@ export function ReportsClient() {
       {tab === "activity" && <ActivityReport />}
       {tab === "pipeline" && <PipelineReports />}
       {tab === "team" && <TeamPerformance />}
+      {tab === "daily" && <DailyReports />}
     </div>
   );
 }
