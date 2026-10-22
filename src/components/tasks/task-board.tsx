@@ -131,6 +131,11 @@ export function TaskBoard({
   const { data, isLoading } = useQuery({
     queryKey,
     queryFn: () => apiGet<{ tasks: TaskListItem[] }>(`/api/tasks?${qp.toString()}`),
+    // Tasks assigned by someone else should show up without a reload. The
+    // notification bell also invalidates ["tasks"] the moment a new
+    // notification lands; this poll is the fallback when none is sent.
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
   const tasks = data?.tasks ?? [];
 

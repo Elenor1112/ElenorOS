@@ -890,9 +890,9 @@
     "semantic_hash": "776527280cb0c73815ae705f177c510f"
   },
   "src/components/shell/notifications.tsx": {
-    "mtime": 1785144365.2390206,
-    "ast_hash": "15f61ad10026b0b5f23c908308c07359",
-    "semantic_hash": "15f61ad10026b0b5f23c908308c07359"
+    "mtime": 1792660540.659139,
+    "ast_hash": "60f686f53d4cb7c2fc2e2e2108be92f1",
+    "semantic_hash": ""
   },
   "src/components/shell/page-header.tsx": {
     "mtime": 1784546882.92568,
@@ -950,8 +950,8 @@
     "semantic_hash": ""
   },
   "src/components/tasks/task-board.tsx": {
-    "mtime": 1792593850.3044343,
-    "ast_hash": "59752f5fb66b495efc6996f9f47c9f74",
+    "mtime": 1792660539.4226868,
+    "ast_hash": "8118da3f2a3ea39c6cc7e9a070b9aaba",
     "semantic_hash": ""
   },
   "src/components/tasks/task-detail.tsx": {
@@ -1412,6 +1412,16 @@
   "src/app/api/sales/daily-reports/route.ts": {
     "mtime": 1792594145.2202446,
     "ast_hash": "7e5e4860c716d5f17bbcad82006fa655",
+    "semantic_hash": ""
+  },
+  "src/app/apple-icon.png": {
+    "mtime": 1792660538.3000782,
+    "ast_hash": "7ffd4043fd25b8e400a39bf3c215e8a5",
+    "semantic_hash": ""
+  },
+  "src/app/icon.png": {
+    "mtime": 1792660538.1585393,
+    "ast_hash": "4dcc93ae747bad3479db42457fde7f03",
     "semantic_hash": ""
   }
 }

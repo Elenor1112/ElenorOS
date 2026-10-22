@@ -17632,21 +17632,6 @@
       "id": "docs_data_model_prisma_enums"
     },
     {
-      "label": "Permission Catalog (groups)",
-      "file_type": "concept",
-      "source_file": "docs/RBAC.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "community": 37,
-      "community_name": "Approval Routing Chain",
-      "norm_label": "permission catalog (groups)",
-      "_origin": "semantic",
-      "id": "docs_rbac_permission_catalog"
-    },
-    {
       "label": "Role \u2192 Permission Matrix",
       "file_type": "concept",
       "source_file": "docs/RBAC.md",
@@ -17840,6 +17825,21 @@
       "norm_label": "vercel + neon deployment",
       "_origin": "semantic",
       "id": "docs_deployment_vercel_neon_deployment"
+    },
+    {
+      "label": "Permission Catalog (groups)",
+      "file_type": "concept",
+      "source_file": "docs/RBAC.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 40,
+      "community_name": "RBAC & Authorization Model",
+      "norm_label": "permission catalog (groups)",
+      "_origin": "semantic",
+      "id": "docs_rbac_permission_catalog"
     },
     {
       "label": "Role Hierarchy (levels 0-4)",
@@ -30632,7 +30632,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/shell/notifications.tsx",
-      "source_location": "L319",
+      "source_location": "L334",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_shell_notifications_notificationbell",
@@ -84857,5 +84857,5 @@
       "source_file": ".claude/skills/graphify/references/update.md"
     }
   ],
-  "built_at_commit": "5f89a191c82dcac0d05a334e5a8688fd5908a75c"
+  "built_at_commit": "8efe6d24ff876db11ad8cb9bb1348180aa0c8d5a"
 }

@@ -208,6 +208,21 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  // A new notification usually means a task was assigned or changed, so the
+  // task boards refetch right away instead of waiting for their own poll. The
+  // first load only records what is already there.
+  const seenIds = React.useRef<Set<string> | null>(null);
+  React.useEffect(() => {
+    if (!data) return;
+    const ids = data.notifications.map((n) => n.id);
+    const seen = seenIds.current;
+    seenIds.current = new Set(ids);
+    if (seen && ids.some((id) => !seen.has(id))) {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["task"] });
+    }
+  }, [data, qc]);
+
   // A push arriving refreshes the bell immediately rather than after the poll.
   React.useEffect(() => {
     if (!("serviceWorker" in navigator)) return;

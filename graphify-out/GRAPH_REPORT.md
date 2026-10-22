@@ -1,7 +1,7 @@
-# Graph Report - Tasks System la finalizma  (2026-10-21)
+# Graph Report - Tasks System la finalizma  (2026-10-22)
 
 ## Corpus Check
-- 281 files · ~177,910 words
+- 281 files · ~182,439 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5f89a191`
+- Built from commit: `8efe6d24`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -275,16 +275,16 @@ Cohesion: 0.32
 Nodes (8): Watcher Debounce, graphify add URL Ingest, Watch Mode Auto-Rebuild, God-Node Derived Whisper Domain Hint, Whisper Video/Audio Transcription, Code-Only Change Shortcut, Graph Diff After Update, Incremental Update Flow
 
 ### Community 37 - "Approval Routing Chain"
-Cohesion: 0.25
-Nodes (8): Leave / Permission / Resignation / Approvals Endpoints, ApprovalStep (generic approval engine table), Data Model (ERD), Prisma Enum Catalog, Testing Strategy (Vitest, Playwright, tsc), Approval Routing Chain, Permission Catalog (groups), Role → Permission Matrix
+Cohesion: 0.29
+Nodes (7): Leave / Permission / Resignation / Approvals Endpoints, ApprovalStep (generic approval engine table), Data Model (ERD), Prisma Enum Catalog, Testing Strategy (Vitest, Playwright, tsc), Approval Routing Chain, Role → Permission Matrix
 
 ### Community 39 - "Elenor OS — Internal Operations Platform"
 Cohesion: 0.38
 Nodes (7): Next.js App Router (RSC + Route Handlers), Elenor OS Architecture Overview, Source Folder Structure (src/app, src/components, src/lib), Deployment, Security, Testing & Roadmap, Cyan Design System, Elenor OS — Internal Operations Platform, Tech Stack (Next.js 15, TypeScript, Prisma, PostgreSQL)
 
 ### Community 40 - "RBAC & Authorization Model"
-Cohesion: 0.29
-Nodes (7): Production Hardening Checklist, Serverless DB Retry-with-Backoff, Vercel + Neon Deployment, RBAC & Authorization Model, Role Hierarchy (levels 0-4), NPM Scripts (db:push, db:seed, db:migrate), Seeded Local Development Accounts
+Cohesion: 0.25
+Nodes (8): Production Hardening Checklist, Serverless DB Retry-with-Backoff, Vercel + Neon Deployment, Permission Catalog (groups), RBAC & Authorization Model, Role Hierarchy (levels 0-4), NPM Scripts (db:push, db:seed, db:migrate), Seeded Local Development Accounts
 
 ### Community 41 - "task-lifecycle.ts"
 Cohesion: 0.18
