@@ -28,9 +28,8 @@ import type { SalesMeta } from "./use-sales-meta";
  * form would be the same 25 inputs maintained twice.
  *
  * Validation differs by mode, deliberately:
- *  - CREATE enforces every field, mirroring leadCreateSchema. A lead is the
- *    start of the CRM workflow and an incomplete one cannot be qualified,
- *    forecast or reported on.
+ *  - CREATE requires company name, contact person, job title and phone,
+ *    mirroring leadCreateSchema; everything else is optional.
  *  - EDIT validates only what is filled in, so correcting one field does not
  *    force a re-check of the whole record.
  *
@@ -110,8 +109,7 @@ export function LeadDialog({
       source: lead?.source ?? "",
       priority: lead?.priority ?? "MEDIUM",
       stage: lead?.stage ?? "NEW",
-      // On create the owner defaults to nobody so the field must be answered
-      // consciously — it decides who is accountable for the deal.
+      // On create a blank owner means "me" — the server assigns the creator.
       ownerId: lead?.owner?.id ?? "",
       estimatedValue: lead?.estimatedValue != null ? String(lead.estimatedValue) : "",
       probability: lead ? String(lead.probability) : "",
@@ -136,42 +134,46 @@ export function LeadDialog({
 
   const save = useMutation({
     mutationFn: (v: FormValues) => {
-      // On create every field is present by construction. On edit, blanks mean
-      // "leave alone" and are dropped rather than sent as empty strings, which
-      // would fail the schema or wipe a stored value.
+      // On create the required fields are present by construction. Blanks mean
+      // "not provided" (create) or "leave alone" (edit), and are dropped rather
+      // than sent as empty strings, which would fail the schema or wipe a
+      // stored value.
       const keep = (value: string) => (editing ? value || undefined : value);
+      const opt = (value: string) => value || undefined;
 
       const payload: Record<string, unknown> = {
         companyName: keep(v.companyName),
-        brandName: keep(v.brandName),
+        brandName: opt(v.brandName),
         contactPerson: keep(v.contactPerson),
         jobTitle: keep(v.jobTitle),
-        email: keep(v.email),
+        email: opt(v.email),
         phone: keep(v.phone),
-        whatsapp: v.whatsapp || undefined,
-        website: keep(v.website),
-        industry: keep(v.industry),
-        companySize: v.companySize || undefined,
-        country: keep(v.country),
-        city: keep(v.city),
-        source: v.source || undefined,
-        priority: v.priority || undefined,
-        stage: v.stage || undefined,
-        notes: keep(v.notes),
+        whatsapp: opt(v.whatsapp),
+        website: opt(v.website),
+        industry: opt(v.industry),
+        companySize: opt(v.companySize),
+        country: opt(v.country),
+        city: opt(v.city),
+        source: opt(v.source),
+        priority: opt(v.priority),
+        stage: opt(v.stage),
+        notes: opt(v.notes),
         tags,
         nextFollowUpAt: v.nextFollowUpAt || null,
-        expectedCloseDate: editing ? v.expectedCloseDate || undefined : v.expectedCloseDate,
+        expectedCloseDate: opt(v.expectedCloseDate),
       };
 
       // Numbers: "" is absent, not zero — sending 0 would silently zero a deal.
       if (v.estimatedValue !== "") payload.estimatedValue = Number(v.estimatedValue);
-      else if (!editing) payload.estimatedValue = undefined;
       if (v.probability !== "") payload.probability = Number(v.probability);
 
       // Only send ownerId when the user may actually assign, so a member's edit
-      // does not trip the Sales.Assign check. On create the schema requires it,
-      // and a member's own id is what the field is pre-filled with.
-      if (meta?.permissions.canAssign || !editing) payload.ownerId = v.ownerId || null;
+      // does not trip the Sales.Assign check. On create a blank owner is left
+      // out and the server assigns the lead to its creator; on edit null
+      // unassigns.
+      if (meta?.permissions.canAssign || !editing) {
+        payload.ownerId = v.ownerId || (editing ? null : undefined);
+      }
 
       return editing
         ? apiSend(`/api/sales/leads/${lead!.id}`, "PATCH", payload)
@@ -204,7 +206,7 @@ export function LeadDialog({
       description={
         editing
           ? lead!.code
-          : 'Every field is required. Enter "N/A" where something genuinely does not exist.'
+          : 'Fields marked * are required. Enter "N/A" where something genuinely does not exist.'
       }
       className="max-w-3xl"
     >
@@ -218,19 +220,19 @@ export function LeadDialog({
                 aria-invalid={Boolean(errors.companyName)}
               />
             </Field>
-            <Field label="Brand name" required={!editing} error={errors.brandName}>
-              <Input {...register("brandName", req("Brand name"))} aria-invalid={Boolean(errors.brandName)} />
+            <Field label="Brand name" error={errors.brandName}>
+              <Input {...register("brandName")} aria-invalid={Boolean(errors.brandName)} />
             </Field>
-            <Field label="Industry" required={!editing} error={errors.industry}>
+            <Field label="Industry" error={errors.industry}>
               <Input
-                {...register("industry", req("Industry"))}
+                {...register("industry")}
                 placeholder="e.g. Retail, F&B"
                 aria-invalid={Boolean(errors.industry)}
               />
             </Field>
-            <Field label="Company size" required={!editing} error={errors.companySize}>
+            <Field label="Company size" error={errors.companySize}>
               <Select
-                {...register("companySize", editing ? {} : { required: "Company size is required" })}
+                {...register("companySize")}
                 aria-invalid={Boolean(errors.companySize)}
               >
                 <option value="">Select…</option>
@@ -241,22 +243,21 @@ export function LeadDialog({
             </Field>
             <Field
               label="Website"
-              required={!editing}
               error={errors.website}
               hint='Enter "N/A" if they have no website'
             >
               <Input
-                {...register("website", req("Website"))}
+                {...register("website")}
                 placeholder="https://"
                 aria-invalid={Boolean(errors.website)}
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Country" required={!editing} error={errors.country}>
-                <Input {...register("country", req("Country"))} aria-invalid={Boolean(errors.country)} />
+              <Field label="Country" error={errors.country}>
+                <Input {...register("country")} aria-invalid={Boolean(errors.country)} />
               </Field>
-              <Field label="City" required={!editing} error={errors.city}>
-                <Input {...register("city", req("City"))} aria-invalid={Boolean(errors.city)} />
+              <Field label="City" error={errors.city}>
+                <Input {...register("city")} aria-invalid={Boolean(errors.city)} />
               </Field>
             </div>
           </div>
@@ -272,15 +273,13 @@ export function LeadDialog({
             </Field>
             <Field
               label="Email"
-              required={!editing}
               error={errors.email}
               hint='A real address, or "N/A"'
             >
               <Input
                 type="text"
                 {...register("email", {
-                  ...req("Email"),
-                  // Mirrors requiredEmail in the schema: N/A passes, anything
+                  // Mirrors optionalEmailOrNA in the schema: N/A passes, anything
                   // else must look like an address.
                   validate: (v: string) =>
                     !v || isNotApplicable(v) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
@@ -303,23 +302,23 @@ export function LeadDialog({
 
         <Section title="Pipeline">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="Status" required={!editing} error={errors.stage}>
-              <Select {...register("stage", editing ? {} : { required: "Status is required" })}>
+            <Field label="Status" error={errors.stage}>
+              <Select {...register("stage")}>
                 {LEAD_STAGE_ORDER.map((s) => (
                   <option key={s} value={s}>{LEAD_STAGE_META[s].label}</option>
                 ))}
               </Select>
             </Field>
-            <Field label="Priority" required={!editing} error={errors.priority}>
-              <Select {...register("priority", editing ? {} : { required: "Priority is required" })}>
+            <Field label="Priority" error={errors.priority}>
+              <Select {...register("priority")}>
                 {Object.entries(LEAD_PRIORITY_META).map(([k, m]) => (
                   <option key={k} value={k}>{m.label}</option>
                 ))}
               </Select>
             </Field>
-            <Field label="Lead source" required={!editing} error={errors.source}>
+            <Field label="Lead source" error={errors.source}>
               <Select
-                {...register("source", editing ? {} : { required: "Lead source is required" })}
+                {...register("source")}
                 aria-invalid={Boolean(errors.source)}
               >
                 <option value="">Select…</option>
@@ -331,12 +330,11 @@ export function LeadDialog({
 
             <Field
               label="Lead owner"
-              required={!editing}
               error={errors.ownerId}
-              hint={canPickOwner ? undefined : "You will own this lead"}
+              hint={canPickOwner ? "Defaults to you if left blank" : "You will own this lead"}
             >
               <Select
-                {...register("ownerId", editing ? {} : { required: "Lead owner is required" })}
+                {...register("ownerId")}
                 disabled={!canPickOwner && editing}
                 aria-invalid={Boolean(errors.ownerId)}
               >
@@ -347,37 +345,34 @@ export function LeadDialog({
               </Select>
             </Field>
 
-            <Field label="Estimated deal value" required={!editing} error={errors.estimatedValue}>
+            <Field label="Estimated deal value" error={errors.estimatedValue}>
               <Input
                 type="number"
                 min={0}
                 step="100"
                 {...register("estimatedValue", {
-                  ...(editing ? {} : { required: "Estimated deal value is required" }),
                   min: { value: 0, message: "Deal value cannot be negative" },
                 })}
                 aria-invalid={Boolean(errors.estimatedValue)}
               />
             </Field>
-            <Field label="Probability %" required={!editing} error={errors.probability}>
+            <Field label="Probability %" error={errors.probability}>
               <Input
                 type="number"
                 min={0}
                 max={100}
                 {...register("probability", {
-                  ...(editing ? {} : { required: "Probability is required" }),
                   min: { value: 0, message: "Probability cannot be below 0" },
                   max: { value: 100, message: "Probability cannot exceed 100" },
                 })}
                 aria-invalid={Boolean(errors.probability)}
               />
             </Field>
-            <Field label="Expected closing date" required={!editing} error={errors.expectedCloseDate}>
+            <Field label="Expected closing date" error={errors.expectedCloseDate}>
               <Input
                 type="date"
                 min={todayInputMin()}
                 {...register("expectedCloseDate", {
-                  ...(editing ? {} : { required: "Expected closing date is required" }),
                   validate: notInThePast("Expected closing date"),
                 })}
                 aria-invalid={Boolean(errors.expectedCloseDate)}
@@ -432,11 +427,10 @@ export function LeadDialog({
             </div>
             <Field
               label="Notes"
-              required={!editing}
               error={errors.notes}
               hint='Context for whoever picks this up. Enter "N/A" if there is nothing to add.'
             >
-              <Textarea {...register("notes", req("Notes"))} rows={3} aria-invalid={Boolean(errors.notes)} />
+              <Textarea {...register("notes")} rows={3} aria-invalid={Boolean(errors.notes)} />
             </Field>
           </div>
         </Section>
@@ -449,8 +443,8 @@ export function LeadDialog({
             <span>
               {Object.keys(errors).length} field
               {Object.keys(errors).length === 1 ? "" : "s"} still need
-              {Object.keys(errors).length === 1 ? "s" : ""} attention. Every field is
-              required — use <span className="font-medium">{NA}</span> where something
+              {Object.keys(errors).length === 1 ? "s" : ""} attention. Required fields
+              can take <span className="font-medium">{NA}</span> where something
               genuinely does not exist.
             </span>
           </div>

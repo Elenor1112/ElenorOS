@@ -5,7 +5,7 @@ import { can } from "@/lib/rbac";
 import { requireFutureDateTime } from "@/lib/timezone";
 import {
   leadVisibilityFilter, nextLeadCode, logSalesActivity,
-  SALES_ACTIVITY, notifySales, requireSalesModule, OPEN_STAGES,
+  SALES_ACTIVITY, notifySales, requireSalesModule, OPEN_STAGES, stageProbability,
 } from "@/lib/sales";
 import { leadCreateSchema } from "@/lib/sales-schemas";
 import type { LeadStage, Prisma } from "@prisma/client";
@@ -93,11 +93,11 @@ export async function POST(req: NextRequest) {
     const user = await requirePermission("Sales.LeadCreate");
     const data = leadCreateSchema.parse(await req.json());
 
-    // An owner is mandatory at intake (see leadCreateSchema), so there is no
-    // unassigned case here — only the question of WHO may be named. Handing a
-    // lead to someone else needs Sales.Assign; without it you may only create
-    // leads you will work yourself.
-    let ownerId = data.ownerId;
+    // An omitted owner defaults to the creator, so there is no unassigned case
+    // here — only the question of WHO may be named. Handing a lead to someone
+    // else needs Sales.Assign; without it you may only create leads you will
+    // work yourself.
+    let ownerId = data.ownerId ?? user.id;
     if (ownerId !== user.id) {
       if (!can(user, "Sales.Assign")) {
         throw new ApiError(403, "You cannot assign leads to other people.");
@@ -112,6 +112,7 @@ export async function POST(req: NextRequest) {
 
     const code = await nextLeadCode();
     const now = new Date();
+    const stage = data.stage ?? "NEW";
 
     const lead = await db.lead.create({
       data: {
@@ -130,22 +131,24 @@ export async function POST(req: NextRequest) {
         city: data.city,
         source: data.source,
         priority: data.priority,
-        stage: data.stage,
+        stage,
         ownerId,
         createdById: user.id,
         tags: data.tags,
         notes: data.notes,
         socialLinks: data.socialLinks as object | undefined,
         estimatedValue: data.estimatedValue,
-        probability: data.probability,
-        expectedCloseDate: requireFutureDateTime(data.expectedCloseDate, "expectedCloseDate"),
+        probability: data.probability ?? stageProbability(stage),
+        expectedCloseDate: data.expectedCloseDate
+          ? requireFutureDateTime(data.expectedCloseDate, "expectedCloseDate")
+          : null,
         nextFollowUpAt: data.nextFollowUpAt
           ? requireFutureDateTime(data.nextFollowUpAt, "nextFollowUpAt")
           : null,
         lastActivityAt: now,
         // The opening row of the stage history, so time-in-stage is measurable
         // from creation rather than from the first move.
-        stageChanges: { create: { toStage: data.stage, actorId: user.id, changedAt: now } },
+        stageChanges: { create: { toStage: stage, actorId: user.id, changedAt: now } },
         ownerHistory: { create: { ownerId, assignedById: user.id, assignedAt: now } },
       },
       select: { id: true, code: true, companyName: true, ownerId: true },
@@ -161,7 +164,7 @@ export async function POST(req: NextRequest) {
 
     await audit({
       actorId: user.id, action: "sales.lead.create", entity: "lead", entityId: lead.id,
-      newValue: { code, companyName: lead.companyName, ownerId: lead.ownerId, stage: data.stage },
+      newValue: { code, companyName: lead.companyName, ownerId: lead.ownerId, stage },
     });
 
     if (lead.ownerId && lead.ownerId !== user.id) {

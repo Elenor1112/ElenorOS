@@ -46,10 +46,10 @@ export const socialLinksSchema = z
 
 // ─── Required-field helpers (lead intake) ────────────────────
 //
-// Creating a lead is the start of the CRM workflow, so every field is
-// mandatory — a half-filled lead cannot be qualified, forecast or reported on.
+// Creating a lead requires only the core identity and contact fields (see
+// leadCreateSchema); the rest can be filled in as the deal progresses.
 //
-// Completeness is enforced WITHOUT forcing anyone to invent data: a field whose
+// Required fields are enforced WITHOUT forcing anyone to invent data: a field whose
 // answer genuinely does not exist (a prospect with no website, an unknown
 // company size) is recorded explicitly as "N/A". That is a real answer — "we
 // asked, there isn't one" — and is distinguishable in reporting from a blank
@@ -79,21 +79,15 @@ function requiredText(label: string, min = 1) {
     .transform((v) => (isNotApplicable(v) ? NA : v));
 }
 
-/** A required email that may be N/A, but must be a real address otherwise. */
-const requiredEmail = z
-  .string({ required_error: "Email is required" })
+/** An optional email: blank is "not provided", N/A is kept, anything else must be an address. */
+const optionalEmailOrNA = z
+  .string()
   .trim()
-  .min(1, 'Email is required — enter an address or "N/A"')
-  .transform((v) => (isNotApplicable(v) ? NA : v))
-  .refine((v) => v === NA || z.string().email().safeParse(v).success, {
+  .optional()
+  .transform((v) => (!v ? undefined : isNotApplicable(v) ? NA : v))
+  .refine((v) => v === undefined || v === NA || z.string().email().safeParse(v).success, {
     message: 'Enter a valid email address, or "N/A" if there is none',
   });
-
-/** A required date field; no N/A escape, since a date is either known or picked. */
-const requiredWallClock = (label: string) =>
-  z
-    .string({ required_error: `${label} is required` })
-    .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/, `${label} is required`);
 
 // Set membership for validation, so order carries no meaning here — listed in
 // lifecycle order anyway so it reads the same as the pipeline.
@@ -129,60 +123,52 @@ export const PROPOSAL_EVENT_TYPES = [
 // ─── Lead ────────────────────────────────────────────────────
 
 /**
- * Lead intake — every field mandatory.
+ * Lead intake — company name, contact person, job title and phone are
+ * mandatory; everything else is optional.
  *
- * This is the strict schema used on CREATE. Text fields accept an explicit
- * "N/A" (see requiredText) so a salesperson can record that a fact does not
- * exist rather than being blocked by it, but nothing may be left blank.
+ * Required text fields accept an explicit "N/A" (see requiredText) so a
+ * salesperson can record that a fact does not exist rather than being blocked
+ * by it. Omitted pipeline fields fall back to defaults in the route (owner =
+ * creator, stage NEW, priority MEDIUM, source OTHER).
  *
  * leadPatchSchema below derives from this with .partial(), so later edits stay
- * field-by-field — the completeness rule belongs to intake, not to every
- * subsequent PATCH.
+ * field-by-field.
  */
 export const leadCreateSchema = z.object({
   companyName: requiredText("Company name"),
-  brandName: requiredText("Brand name"),
+  brandName: optionalText,
   contactPerson: requiredText("Contact person"),
   jobTitle: requiredText("Job title"),
   phone: requiredText("Phone number"),
-  // Optional, unlike phone: not every prospect is reachable on WhatsApp, and an
-  // "N/A" placeholder in a dialable field is worse than an empty one. Carried
-  // over to Client.whatsapp when the deal is won.
+  // Carried over to Client.whatsapp when the deal is won.
   whatsapp: optionalText,
-  email: requiredEmail,
-  website: requiredText("Website"),
-  industry: requiredText("Industry"),
-  companySize: z.enum(COMPANY_SIZES, {
-    required_error: "Company size is required",
-    invalid_type_error: "Select a company size",
-  }),
-  country: requiredText("Country"),
-  city: requiredText("City"),
-  source: z.enum(LEAD_SOURCES, { required_error: "Lead source is required" }),
-  priority: z.enum(PRIORITIES, { required_error: "Priority is required" }),
-  stage: z.enum(LEAD_STAGES, { required_error: "Status is required" }),
-  /** The owner is who becomes accountable, so a lead is never created ownerless. */
-  ownerId: z.string({ required_error: "Lead owner is required" }).min(1, "Lead owner is required"),
+  email: optionalEmailOrNA,
+  website: optionalText,
+  industry: optionalText,
+  companySize: z
+    .union([z.enum(COMPANY_SIZES, { invalid_type_error: "Select a company size" }), z.literal("")])
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  country: optionalText,
+  city: optionalText,
+  source: z.enum(LEAD_SOURCES).optional(),
+  priority: z.enum(PRIORITIES).optional(),
+  stage: z.enum(LEAD_STAGES).optional(),
+  /** Defaults to the creator in the route, so a lead is never created ownerless. */
+  ownerId: z.string().min(1).optional(),
   estimatedValue: z
-    .number({
-      required_error: "Estimated deal value is required",
-      invalid_type_error: "Enter the estimated deal value",
-    })
+    .number({ invalid_type_error: "Enter the estimated deal value" })
     .nonnegative("Deal value cannot be negative")
-    .max(1e10),
-  expectedCloseDate: requiredWallClock("Expected closing date"),
+    .max(1e10)
+    .optional(),
+  expectedCloseDate: optionalWallClock,
   probability: z
-    .number({
-      required_error: "Probability is required",
-      invalid_type_error: "Enter a probability between 0 and 100",
-    })
+    .number({ invalid_type_error: "Enter a probability between 0 and 100" })
     .int()
     .min(0, "Probability cannot be below 0")
-    .max(100, "Probability cannot exceed 100"),
-  notes: requiredText("Notes"),
-  // Not in the required set: tags, social links and the follow-up date are
-  // working aids rather than facts about the prospect, and forcing them would
-  // only produce placeholder noise.
+    .max(100, "Probability cannot exceed 100")
+    .optional(),
+  notes: optionalText,
   tags: z.array(z.string().trim().min(1)).max(20).default([]),
   socialLinks: socialLinksSchema,
   nextFollowUpAt: optionalWallClock,
