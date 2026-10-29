@@ -35,6 +35,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: { id, ...visibility },
       include: {
         owner: userPick,
+        sourcedBy: userPick,
         createdBy: userPick,
         convertedClient: { select: { id: true, company: true, status: true } },
         meetings: {
@@ -190,6 +191,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     if (body.probability !== undefined && !stageChanging) data.probability = body.probability;
     if (ownerChanging) data.owner = body.ownerId ? { connect: { id: body.ownerId } } : { disconnect: true };
+    // Sourced-by is credit only — it grants no visibility — so Sales.LeadEdit
+    // (checked above) is enough to set it.
+    if (body.sourcedById !== undefined) {
+      if (body.sourcedById) {
+        const sourcer = await db.user.findFirst({
+          where: { id: body.sourcedById, status: "ACTIVE" }, select: { id: true },
+        });
+        if (!sourcer) throw new ApiError(400, "The selected person who got the number does not exist.");
+      }
+      data.sourcedBy = body.sourcedById ? { connect: { id: body.sourcedById } } : { disconnect: true };
+    }
 
     // The transition helper owns wonAt/lostAt and the probability default, so
     // those invariants live in one place rather than in each caller.

@@ -19,6 +19,7 @@ const listSelect = {
   nextFollowUpAt: true, lastActivityAt: true, tags: true, wonAt: true, lostAt: true,
   convertedClientId: true, createdAt: true,
   owner: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+  sourcedBy: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
   _count: { select: { meetings: true, proposals: true, briefs: true, feedback: true } },
 } satisfies Prisma.LeadSelect;
 
@@ -110,6 +111,15 @@ export async function POST(req: NextRequest) {
       ownerId = owner.id;
     }
 
+    // Who got the number. Credit only, so any active user may be named.
+    if (data.sourcedById) {
+      const sourcer = await db.user.findFirst({
+        where: { id: data.sourcedById, status: "ACTIVE" },
+        select: { id: true },
+      });
+      if (!sourcer) throw new ApiError(400, "The selected person who got the number does not exist.");
+    }
+
     const code = await nextLeadCode();
     const now = new Date();
     const stage = data.stage ?? "NEW";
@@ -133,6 +143,7 @@ export async function POST(req: NextRequest) {
         priority: data.priority,
         stage,
         ownerId,
+        sourcedById: data.sourcedById,
         createdById: user.id,
         tags: data.tags,
         notes: data.notes,

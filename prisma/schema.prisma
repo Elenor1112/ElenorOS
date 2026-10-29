@@ -183,6 +183,7 @@ model User {
   // ── Sales ──
   ownedLeads          Lead[]                 @relation("LeadOwner")
   createdLeads        Lead[]                 @relation("LeadCreatedBy")
+  sourcedLeads        Lead[]                 @relation("LeadSourcedBy")
   leadOwnerHistory    LeadOwnerAssignment[]  @relation("LeadOwnerAssignmentOwner")
   leadOwnerChanges    LeadOwnerAssignment[]  @relation("LeadOwnerAssignmentAssignedBy")
   organizedMeetings   SalesMeeting[]         @relation("MeetingOrganizer")
@@ -1448,6 +1449,11 @@ model Lead {
   /// Sales.ViewAll see exactly the leads where this points at them.
   ownerId String?
   owner   User?   @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  /// Who got the number. Credit only: the owner above is the one who called
+  /// the client and works the deal, and visibility follows the owner alone.
+  sourcedById String?
+  sourcedBy   User?   @relation("LeadSourcedBy", fields: [sourcedById], references: [id], onDelete: SetNull)
 
   createdById String
   createdBy   User   @relation("LeadCreatedBy", fields: [createdById], references: [id])

@@ -112,6 +112,7 @@ export type LeadDetail = {
   convertedClientId: string | null; convertedAt: string | null;
   createdAt: string; updatedAt: string;
   owner: PersonRef | null;
+  sourcedBy: PersonRef | null;
   createdBy: PersonRef;
   convertedClient: { id: string; company: string; status: string } | null;
   meetings: LeadMeeting[];

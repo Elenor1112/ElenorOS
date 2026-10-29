@@ -156,6 +156,8 @@ export const leadCreateSchema = z.object({
   stage: z.enum(LEAD_STAGES).optional(),
   /** Defaults to the creator in the route, so a lead is never created ownerless. */
   ownerId: z.string().min(1).optional(),
+  /** Who got the number — may differ from the owner, who called the client. */
+  sourcedById: z.string().min(1).optional(),
   estimatedValue: z
     .number({ invalid_type_error: "Enter the estimated deal value" })
     .nonnegative("Deal value cannot be negative")
@@ -190,6 +192,7 @@ export const leadCreateSchema = z.object({
  */
 export const leadPatchSchema = leadCreateSchema.partial().extend({
   ownerId: z.string().min(1).nullable().optional(),
+  sourcedById: z.string().min(1).nullable().optional(),
   lostReason: optionalText,
 });
 

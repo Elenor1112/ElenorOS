@@ -216,15 +216,19 @@ export function LeadDetailClient({ leadId }: { leadId: string }) {
         </div>
 
         {/* commercial summary */}
-        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-5">
           <Metric label="Deal value" value={formatMoney(lead.estimatedValue)} />
           <div>
             <div className="text-xs text-muted-foreground">Probability</div>
             <ProbabilityBar value={lead.probability} className="mt-1.5" />
           </div>
           <Metric label="Expected close" value={formatDate(lead.expectedCloseDate)} />
+          <Metric
+            label="Got the number"
+            value={lead.sourcedBy ? `${lead.sourcedBy.firstName} ${lead.sourcedBy.lastName}` : "—"}
+          />
           <div>
-            <div className="text-xs text-muted-foreground">Owner</div>
+            <div className="text-xs text-muted-foreground">Called the client (owner)</div>
             {can("Sales.Assign") && meta && !readOnly ? (
               <Select
                 value={lead.owner?.id ?? ""}

@@ -68,6 +68,7 @@ export function LeadDialog({
     priority: string;
     stage: string;
     ownerId: string;
+    sourcedById: string;
     estimatedValue: string;
     probability: string;
     expectedCloseDate: string;
@@ -111,6 +112,7 @@ export function LeadDialog({
       stage: lead?.stage ?? "NEW",
       // On create a blank owner means "me" — the server assigns the creator.
       ownerId: lead?.owner?.id ?? "",
+      sourcedById: lead?.sourcedBy?.id ?? "",
       estimatedValue: lead?.estimatedValue != null ? String(lead.estimatedValue) : "",
       probability: lead ? String(lead.probability) : "",
       expectedCloseDate: toLocalInputValue(lead?.expectedCloseDate, false),
@@ -161,6 +163,8 @@ export function LeadDialog({
         tags,
         nextFollowUpAt: v.nextFollowUpAt || null,
         expectedCloseDate: opt(v.expectedCloseDate),
+        // Blank is "not recorded" on create; on edit null clears it.
+        sourcedById: v.sourcedById || (editing ? null : undefined),
       };
 
       // Numbers: "" is absent, not zero — sending 0 would silently zero a deal.
@@ -328,8 +332,20 @@ export function LeadDialog({
               </Select>
             </Field>
 
+            <Field label="Got the number" error={errors.sourcedById} hint="Optional">
+              <Select
+                {...register("sourcedById")}
+                aria-invalid={Boolean(errors.sourcedById)}
+              >
+                <option value="">Select…</option>
+                {(meta?.salespeople ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
+                ))}
+              </Select>
+            </Field>
+
             <Field
-              label="Lead owner"
+              label="Called the client (owner)"
               error={errors.ownerId}
               hint={canPickOwner ? "Defaults to you if left blank" : "You will own this lead"}
             >

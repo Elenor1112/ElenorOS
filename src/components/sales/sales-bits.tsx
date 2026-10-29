@@ -62,6 +62,8 @@ export type LeadListItem = {
   convertedClientId: string | null;
   createdAt: string;
   owner: PersonRef | null;
+  /** Who got the number; the owner is who called the client. */
+  sourcedBy?: PersonRef | null;
   _count?: { meetings: number; proposals: number; briefs: number; feedback: number };
 };
 
