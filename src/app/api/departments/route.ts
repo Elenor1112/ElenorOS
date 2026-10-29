@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireUser, requirePermission, audit, toErrorResponse } from "@/lib/api";
+import { requireUser, requirePermission, audit, toErrorResponse, ApiError } from "@/lib/api";
+import { DEPARTMENT_HEAD_ROLES } from "@/lib/rbac";
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
   try {
     const actor = await requirePermission("Department.Create");
     const data = schema.parse(await req.json());
+    if (data.headId && !DEPARTMENT_HEAD_ROLES.includes(actor.roleKey)) {
+      throw new ApiError(403, "Only the CEO can assign a department head.");
+    }
     const dept = await db.department.create({
       data: { name: data.name, description: data.description, color: data.color ?? "#06B6D4", headId: data.headId || null },
     });

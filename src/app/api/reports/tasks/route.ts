@@ -4,8 +4,8 @@ import { requireUser, toErrorResponse } from "@/lib/api";
 import { can, REPORT_TEAM_ROLES } from "@/lib/rbac";
 import { tableResponse, type Table } from "@/lib/export";
 import { fullName } from "@/lib/utils";
-import { isDateOnly, requireUserDateTime } from "@/lib/timezone";
-import { parseReportRange, shiftYmd, ymdOf } from "@/lib/report-range";
+import { parseReportRange } from "@/lib/report-range";
+import { effectiveDeadline, deliveredAt, onTimeRate as rate } from "@/lib/task-metrics";
 import type { Prisma, RoleKey, TaskStatus } from "@prisma/client";
 
 /**
@@ -31,25 +31,6 @@ import type { Prisma, RoleKey, TaskStatus } from "@prisma/client";
  */
 
 const OPEN: TaskStatus[] = ["TODO", "IN_PROGRESS", "HOLD", "WAITING_APPROVAL", "EDITING"];
-/**
- * A date-only deadline stores company-zone midnight and means "end of that
- * day" — the same rule the analytics overview applies to "overdue".
- */
-function effectiveDeadline(deadline: Date): Date {
-  return isDateOnly(deadline)
-    ? requireUserDateTime(shiftYmd(ymdOf(deadline), 1), "deadline")
-    : deadline;
-}
-
-/**
- * When the work was handed in. `submittedAt` is re-stamped on every
- * resubmission, so it is the hand-in of the version that was finally accepted;
- * tasks closed without an approval cycle fall back to the approval stamp and
- * then to the last update.
- */
-function deliveredAt(t: { submittedAt: Date | null; approvedAt: Date | null; updatedAt: Date }): Date {
-  return t.submittedAt ?? t.approvedAt ?? t.updatedAt;
-}
 
 type Row = {
   userId: string; name: string; roleKey: RoleKey; roleName: string;
@@ -58,9 +39,6 @@ type Row = {
   waitingApproval: number; openOverdue: number;
   onTimeRate: number | null;
 };
-
-const rate = (onTime: number, late: number) =>
-  onTime + late ? Math.round((onTime / (onTime + late)) * 100) : null;
 
 export async function GET(req: NextRequest) {
   try {

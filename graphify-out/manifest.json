@@ -125,9 +125,9 @@
     "semantic_hash": "1dca4891729f62aba59d6409023e2413"
   },
   "src/app/(app)/departments/departments-client.tsx": {
-    "mtime": 1785063448.621588,
-    "ast_hash": "980906231ca31f6bb5cab0cbdf6c42bd",
-    "semantic_hash": "980906231ca31f6bb5cab0cbdf6c42bd"
+    "mtime": 1793268374.6856358,
+    "ast_hash": "985dbf8fca757be67b5b9e23364a9b76",
+    "semantic_hash": ""
   },
   "src/app/(app)/departments/page.tsx": {
     "mtime": 1784617277.6690383,
@@ -470,14 +470,14 @@
     "semantic_hash": "390da6c832a95021edc113202236ff50"
   },
   "src/app/api/departments/[id]/route.ts": {
-    "mtime": 1785063252.7232132,
-    "ast_hash": "fe54e8d68afe1cebdffaa188dfb00a3f",
-    "semantic_hash": "fe54e8d68afe1cebdffaa188dfb00a3f"
+    "mtime": 1793268329.482084,
+    "ast_hash": "6dbaf01b29ce6722ec2fef411546ef81",
+    "semantic_hash": ""
   },
   "src/app/api/departments/route.ts": {
-    "mtime": 1785063266.9001815,
-    "ast_hash": "20ad705a52cc268164e457c5f19d76df",
-    "semantic_hash": "20ad705a52cc268164e457c5f19d76df"
+    "mtime": 1793268331.306969,
+    "ast_hash": "06f1016b89469b840469d0d37628ec54",
+    "semantic_hash": ""
   },
   "src/app/api/employees/[id]/avatar/route.ts": {
     "mtime": 1785072630.247504,
@@ -1125,8 +1125,8 @@
     "semantic_hash": "7333510a504a6178024cc9b1f21c0456"
   },
   "src/lib/rbac.ts": {
-    "mtime": 1791291744.4752276,
-    "ast_hash": "7d117b70a8b41c6f06c7fde169eb0603",
+    "mtime": 1793268303.244255,
+    "ast_hash": "6890b3efc019dc345fa083b2d97336cd",
     "semantic_hash": ""
   },
   "src/lib/sales-constants.ts": {
@@ -1335,8 +1335,8 @@
     "semantic_hash": ""
   },
   "src/app/api/reports/tasks/route.ts": {
-    "mtime": 1791292658.3463922,
-    "ast_hash": "754697d2dc09878de5808ed00fb67e3b",
+    "mtime": 1793268302.346725,
+    "ast_hash": "1d5c3d96fd694b1338c3710bb146e4ea",
     "semantic_hash": ""
   },
   "src/components/charts/report-charts.tsx": {
@@ -1422,6 +1422,21 @@
   "src/app/icon.png": {
     "mtime": 1792660538.1585393,
     "ast_hash": "4dcc93ae747bad3479db42457fde7f03",
+    "semantic_hash": ""
+  },
+  "src/app/(app)/departments/[id]/department-detail-client.tsx": {
+    "mtime": 1793268397.6658967,
+    "ast_hash": "0d0eaa8dd801cf0fa160a86521e43c17",
+    "semantic_hash": ""
+  },
+  "src/app/(app)/departments/[id]/page.tsx": {
+    "mtime": 1793268363.0989037,
+    "ast_hash": "74d3c639ab043e9175486262615afdb9",
+    "semantic_hash": ""
+  },
+  "src/lib/task-metrics.ts": {
+    "mtime": 1793268299.5951252,
+    "ast_hash": "333a1a35cd0e3371f74b155efd8a0789",
     "semantic_hash": ""
   }
 }

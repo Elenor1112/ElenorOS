@@ -1,7 +1,7 @@
-# Graph Report - Tasks System la finalizma  (2026-10-28)
+# Graph Report - Tasks System la finalizma  (2026-10-29)
 
 ## Corpus Check
-- 281 files · ~182,203 words
+- 281 files · ~182,459 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,12 +10,12 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `48f2e7af`
+- Built from commit: `0303152f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- toErrorResponse
+- db.ts
 - utils.ts
 - job-description/route.ts
 - audit
@@ -34,7 +34,7 @@
 - reports/route.ts
 - compilerOptions
 - auth.ts
-- requireUser
+- toErrorResponse
 - scripts
 - devDependencies
 - Extraction Subagent Prompt
@@ -127,9 +127,9 @@
 
 ## Communities (88 total, 20 thin omitted)
 
-### Community 0 - "toErrorResponse"
+### Community 0 - "db.ts"
 Cohesion: 0.07
-Nodes (48): GET(), DELETE(), GET(), PATCH(), updateSchema, GET(), POST(), schema (+40 more)
+Nodes (37): GET(), DELETE(), GET(), PATCH(), updateSchema, GET(), POST(), schema (+29 more)
 
 ### Community 1 - "utils.ts"
 Cohesion: 0.08
@@ -199,9 +199,9 @@ Nodes (26): dom, dom.iterable, esnext, next-env.d.ts, .next/types/**/*.ts, node_
 Cohesion: 0.11
 Nodes (29): POST(), schema, POST(), schema, POST(), GET(), POST(), GET() (+21 more)
 
-### Community 19 - "requireUser"
+### Community 19 - "toErrorResponse"
 Cohesion: 0.08
-Nodes (45): GET(), POST(), schema, POST(), GET(), GET(), POST(), schema (+37 more)
+Nodes (55): GET(), GET(), POST(), schema, GET(), POST(), GET(), POST() (+47 more)
 
 ### Community 20 - "scripts"
 Cohesion: 0.11
@@ -224,8 +224,8 @@ Cohesion: 0.20
 Nodes (12): Auth Endpoints (login, logout, refresh, me), Authentication Flow (JWT + Rotating Refresh), getSessionUser(), State Management (TanStack Query + Session Context), Identity, Org & RBAC Domain, RefreshToken model, UserPermission override (ALLOW/DENY), Soft Deletes (deactivate, revoke tokens) (+4 more)
 
 ### Community 25 - "api.ts"
-Cohesion: 0.29
-Nodes (9): GET(), handler(), APP_TIMEZONE, BACKDATE_WINDOW_DAYS, InvalidDateError, offsetMinutesAt(), parseUserDateTime(), requireUserDateTime() (+1 more)
+Cohesion: 0.15
+Nodes (17): GET(), DELETE(), GET(), PATCH(), updateSchema, DELETE(), GET(), PATCH() (+9 more)
 
 ### Community 26 - "activity-report.tsx"
 Cohesion: 0.06
@@ -324,8 +324,8 @@ Cohesion: 0.40
 Nodes (3): APPLY, beforeArg, db
 
 ### Community 62 - "can"
-Cohesion: 0.14
-Nodes (19): GET(), POST(), GET(), userPick, DELETE(), loadIdea(), PATCH(), POST() (+11 more)
+Cohesion: 0.23
+Nodes (12): DELETE(), loadIdea(), PATCH(), POST(), userPick, GET(), DELETE(), GET() (+4 more)
 
 ### Community 73 - "apiGet"
 Cohesion: 0.10
@@ -357,15 +357,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `AuditLog model` and `Graphify Knowledge Graph Workflow`?**
   _Edge tagged AMBIGUOUS (relation: semantically_similar_to) - confidence is low._
-- **Why does `toErrorResponse()` connect `toErrorResponse` to `job-description/route.ts`, `audit`, `activity/route.ts`, `avatar/route.ts`, `ApiError`, `rbac.ts`, `reports/route.ts`, `sales/attachments/[id]/route.ts`, `auth.ts`, `requireUser`, `api.ts`, `activity-report.tsx`, `can`, `eotm.ts`?**
+- **Why does `toErrorResponse()` connect `toErrorResponse` to `db.ts`, `job-description/route.ts`, `audit`, `activity/route.ts`, `avatar/route.ts`, `ApiError`, `rbac.ts`, `reports/route.ts`, `sales/attachments/[id]/route.ts`, `auth.ts`, `api.ts`, `activity-report.tsx`, `can`, `eotm.ts`?**
   _High betweenness centrality (0.055) - this node is a cross-community bridge._
-- **Why does `requireUser()` connect `requireUser` to `toErrorResponse`, `job-description/route.ts`, `audit`, `activity/route.ts`, `avatar/route.ts`, `ApiError`, `rbac.ts`, `reports/route.ts`, `sales/attachments/[id]/route.ts`, `auth.ts`, `api.ts`, `activity-report.tsx`, `can`, `eotm.ts`?**
+- **Why does `requireUser()` connect `toErrorResponse` to `db.ts`, `job-description/route.ts`, `audit`, `activity/route.ts`, `avatar/route.ts`, `ApiError`, `rbac.ts`, `reports/route.ts`, `sales/attachments/[id]/route.ts`, `auth.ts`, `api.ts`, `activity-report.tsx`, `can`, `eotm.ts`?**
   _High betweenness centrality (0.039) - this node is a cross-community bridge._
-- **Why does `db` connect `requireUser` to `toErrorResponse`, `job-description/route.ts`, `audit`, `activity/route.ts`, `avatar/route.ts`, `PageContainer`, `ApiError`, `page-header.tsx`, `rbac.ts`, `reports/route.ts`, `sales/attachments/[id]/route.ts`, `auth.ts`, `api.ts`, `activity-report.tsx`, `can`, `eotm.ts`?**
+- **Why does `db` connect `toErrorResponse` to `db.ts`, `job-description/route.ts`, `audit`, `activity/route.ts`, `avatar/route.ts`, `PageContainer`, `ApiError`, `page-header.tsx`, `rbac.ts`, `reports/route.ts`, `sales/attachments/[id]/route.ts`, `auth.ts`, `api.ts`, `activity-report.tsx`, `can`, `eotm.ts`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **What connects `nextConfig`, `name`, `version` to the rest of the system?**
   _361 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `toErrorResponse` be split into smaller, more focused modules?**
-  _Cohesion score 0.06775956284153005 - nodes in this community are weakly interconnected._
+- **Should `db.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.0663265306122449 - nodes in this community are weakly interconnected._
 - **Should `utils.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.08016877637130802 - nodes in this community are weakly interconnected._

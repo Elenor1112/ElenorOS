@@ -428,6 +428,20 @@ export const REPORT_TEAM_ROLES: Partial<Record<RoleKey, RoleKey[]>> = {
   ART_DIRECTOR: ["DESIGNER"],
 };
 
+/**
+ * Roles that see a department's members' tasks and performance on the
+ * department page. Everyone else sees the member list only.
+ */
+export const DEPARTMENT_INSIGHT_ROLES: RoleKey[] = [
+  "CEO", "OPERATIONS_MANAGER", "ACCOUNT_MANAGER", "SALES_MANAGER",
+];
+
+/**
+ * Naming a department head is the CEO's call alone — narrower than
+ * Department.Edit, which Operations and Account Management also hold.
+ */
+export const DEPARTMENT_HEAD_ROLES: RoleKey[] = ["CEO"];
+
 // ─── Runtime helpers ─────────────────────────────────────────
 
 export type SessionUser = {

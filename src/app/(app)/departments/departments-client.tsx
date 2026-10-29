@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -82,9 +83,10 @@ export function DepartmentsClient() {
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {data?.departments.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden transition-colors hover:border-primary/40">
                 <div className="h-1.5" style={{ backgroundColor: d.color }} />
                 <div className="p-5">
+                  <Link href={`/departments/${d.id}`} className="block">
                   <div className="flex items-center gap-2">
                     <div className="flex size-9 items-center justify-center rounded-lg" style={{ backgroundColor: `${d.color}1A`, color: d.color }}>
                       <Network className="size-4" />
@@ -107,6 +109,7 @@ export function DepartmentsClient() {
                       <span className="flex items-center gap-1"><CheckSquare className="size-3" /> {d._count.tasks}</span>
                     </div>
                   </div>
+                  </Link>
                   {(can("Department.Edit") || can("Department.Delete")) && (
                     <div className="mt-3 flex justify-end gap-1 border-t border-border pt-3">
                       {can("Department.Edit") && (
